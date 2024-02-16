@@ -1,96 +1,65 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-ClassCode_S24_Class_10_STARTER.py
-
-Adapts the Kramer/Eden bootstrapping code to
-more common & current Python methods.
-
-Created on Thu Sep 30 13:16:14 2021
-
-@author: djangraw
-"""
-
-# Import packages
+import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import pyplot as plt
+from scipy.stats import sem
 
-# declare constants
-ntrials = 1000
-sample_count = 500
-fs = 500
-# Generate synthetic data
-t = np.arange(sample_count)/fs
-signal = np.zeros(sample_count)
-signal[(t>=0.3) & (t<0.5)] = 0.2
-noise = np.random.randn(ntrials,sample_count)
-EEGa = signal + noise
+def plot_erps_with_confidence_intervals(data, time_points, channel_names, event_type='target'):
+    """
+    Plot ERPs with 95% confidence intervals based on the standard error of the mean.
 
-# %% Bootstrapping Steps from Kramer & Eden Ch. 2
+    Parameters:
+    - data: A 3D numpy array with dimensions (channels, time points, trials).
+    - time_points: 1D array representing the time points.
+    - channel_names: List of channel names.
+    - event_type: String specifying the event type ('target' or 'nontarget').
 
-# Draw 1000 integers with replacement from [0, 1000)
-np.random.seed(343)
-i = np.random.randint(0, ntrials, size=ntrials)
+    Returns:
+    - None (plots the ERPs with confidence intervals).
+    """
+    # Assuming data has dimensions (channels, time points, trials)
+    num_channels, num_time_points, num_trials = data.shape
+    print(data.shape)
+    # Calculate mean ERP and standard error of the mean (SEM) for each time point and channel
+    mean_erp = np.mean(data, axis=-1)
+    sem_erp = sem(data, axis=-1)
+    print(sem_erp.shape)
+    print(mean_erp.shape)
+    # Calculate 95% confidence interval
+    confidence_interval = 1.96 * sem_erp  # Assuming normal distribution, 1.96 is the z-value for 95% confidence
 
-# Get random trials from EEGa
-# Note that names ending in numbers now have o at the end
-# to get them to show up in Spyder's Variable Explorer.
-EEG0o = EEGa[i]  # Create the resampled EEG.
+    # Plot ERPs
+    for channel_idx in range(num_channels):
+        plt.plot(time_points, mean_erp[channel_idx], label=f'{channel_names[channel_idx]} - {event_type.capitalize()} ERP')
 
-# Calculate bootstrapped ERP
-ERP0o = np.mean(EEG0o,axis=0)
-ERP0o = EEG0o.mean(axis=0)  # Create the resampled ERP
+        # Plot confidence intervals using fill_between
+        plt.fill_between(time_points,
+                         mean_erp[channel_idx] - confidence_interval[channel_idx],
+                         mean_erp[channel_idx] + confidence_interval[channel_idx],
+                         alpha=0.2, label=f'{channel_names[channel_idx]} - 95% CI')
 
-# Calculate actual ERP
-ERPa = np.mean(EEGa,axis=0)
+    # Add labels, title, legend, etc.
+    plt.xlabel('Time Points')
+    plt.ylabel('Voltage')
+    plt.title(f'ERPs with 95% Confidence Intervals ({event_type.capitalize()} Events)')
+    plt.legend()
+    plt.show()
 
-# Get many bootstrapped ERPs
-i = np.random.randint(ntrials, size=ntrials); # Draw integers,
-EEG1 = EEGa[i];                     # ... create resampled EEG,
-ERP1o = EEG1.mean(0);                # ... create resampled ERP.
+import numpy as np
+import matplotlib.pyplot as plt
 
-i = np.random.randint(ntrials, size=ntrials); # Draw integers,
-EEG2 = EEGa[i];                     # ... create resampled EEG,
-ERP2o = EEG2.mean(0);                # ... create resampled ERP.
+# Example data generation (replace this with your actual data)
+np.random.seed(42)
+num_channels = 5
+num_time_points = 100
+num_trials = 20
 
-i = np.random.randint(ntrials, size=ntrials); # Draw integers,
-EEG3 = EEGa[i];                     # ... create resampled EEG,
-ERP3o = EEG3.mean(0);                # ... create resampled ERP.
+data_target = np.random.normal(loc=0, scale=1, size=(num_channels, num_time_points, num_trials))
+data_nontarget = np.random.normal(loc=1, scale=1, size=(num_channels, num_time_points, num_trials))
 
+time_points = np.arange(num_time_points)
+channel_names = [f'Channel_{i+1}' for i in range(num_channels)]
 
-# %% STEPS 1-3: Get Bootstrapped ERPs with a loop
-def bootstrapERP(EEGdata, size=None):  # Steps 1-2
-    """ Calculate bootstrap ERP from data (array type)"""
-    ntrials = len(EEGdata)             # Get the number of trials
-    if size == None:                   # Unless the size is specified,
-        size = ntrials                 # ... choose ntrials
-    i = np.random.randint(ntrials, size=size)    # ... draw random trials,
-    EEG0 = EEGdata[i]                  # ... create resampled EEG,
-    return EEG0.mean(0)                # ... return resampled ERP.
-                                       # Step 3: Repeat 3000 times 
-ERP0o = [bootstrapERP(EEGa) for _ in range(3000)]
-ERP0o = np.array(ERP0o)                     # ... and convert the result to an array
+# Using the provided function to plot ERPs with confidence intervals for target events
+plot_erps_with_confidence_intervals(data_target, time_points, channel_names, event_type='target')
 
-    
-# %% STEP 4: GET CIs
-
-# create figure
-plt.figure(3,clear=True)
-
-# copied/adapted from Kramer/Eden
-ERP0o.sort(axis=0)         # Sort each column of the resampled ERP
-N = len(ERP0o)             # Define the number of samples
-ciL = ERP0o[int(0.025*N)]  # Determine the lower CI
-ciU = ERP0o[int(0.975*N)]  # ... and the upper CI
-mnA = EEGa.mean(0)        # Determine the ERP for condition A
-plt.plot(t, mnA, 'k', lw=3)   # ... and plot it
-plt.plot(t, ciL, 'k:')        # ... and plot the lower CI
-plt.plot(t, ciU, 'k:')        # ... and the upper CI
-plt.hlines(0, 0, 1, 'b')      # plot a horizontal line at 0
-                          # ... and label the axes
-plt.grid()
-plt.xlabel('time (s)')
-plt.ylabel('Voltage (uV)')
-plt.suptitle('ERP of condition A with bootstrap confidence intervals')  
-
-
+# Using the same function to plot ERPs with confidence intervals for non-target events
+plot_erps_with_confidence_intervals(data_nontarget, time_points, channel_names, event_type='nontarget')

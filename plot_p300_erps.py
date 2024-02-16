@@ -72,7 +72,7 @@ def epoch_data (eeg_time, eeg_data, event_sample, epoch_start_time = -0.5, epoch
         for eeg_time_ind in range(event - event_before, event + event_after):
 
             epoch.append(eeg_data.T[eeg_time_ind])
-        eeg_epochs[evnet_ind] = np.array(epoch)
+        eeg_epochs[evnet_ind] = np.array(epoch, dtype=np.float64)
 
     return eeg_epochs, erp_times
 
@@ -128,10 +128,10 @@ def plot_erps(target_erp, nontarget_erp, erp_times):
                 else:
                     yticks = np.amax(abs(nontarget_erp[plot_index]))//1
                 # Plot target ERP
-                ax.plot(erp_times, target_erp[plot_index], label='Target')
-                
+                ax.plot(erp_times, target_erp[plot_index], label='Target', color='C0')
+                 
                 # Plot nontarget ERP
-                ax.plot(erp_times, nontarget_erp[plot_index], label='Nontarget')
+                ax.plot(erp_times, nontarget_erp[plot_index], label='Nontarget', color='C1')
                 
                 # Add a dotted line at x=0 and y=0
                 ax.axvline(x=0, linestyle='--', color='black', linewidth=1)
