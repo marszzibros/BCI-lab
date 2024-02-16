@@ -103,7 +103,10 @@ def plot_erps(target_erp, nontarget_erp, erp_times):
         nontarget_erp: 2d array of size (samples_per_epoch, eeg_data.shape[0]) where eeg_data.shape[0] refers to number of EEG channels. Mean 
         ERP of all epochs that are labelled as nontarget epochs 
 
-        erp_times: 1d array of erp time axis, relative to onset of event 
+        erp_times: 1d array of erp time axis, relative to onset of event
+    Returns:
+        fig: matplotlib class, fig information processing
+        axes: 3x3 array, axes information after processing
     """
     # Reshape the data for subplot arrangement
     target_erp = target_erp.T  # Transpose to have shape (8, 150)
@@ -153,8 +156,4 @@ def plot_erps(target_erp, nontarget_erp, erp_times):
             else:
                 fig.delaxes(ax)
 
-    # Adjust layout for better spacing
-    plt.tight_layout()
-
-    # Show the plot
-    plt.show()
+    return fig, axes

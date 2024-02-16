@@ -16,13 +16,14 @@ import loadmat
 
 def load_training_eeg(data_directory = "P300Data/", subject = 3):
     """
-    load_training_eeg
-
-    load p300 eeg data and return four arrays eeg_time, eeg_data, rowcol_id, is_target
-
-    data_directory (string) : directory path to the p300 data  
-    subject           (int) : subject of the data
-
+     Args: 
+          data_directory: string, file path to the data
+          subject: int, subject number to be loaded
+     Returns:
+          eeg_time: 1d array (float), time axis in millseconds 
+          eeg_data: 2d array of dimensions channels x samples 
+          rowcol_id: 1d array of ints, 0 for no rowcol and 1-12 for rowcols on the P300 matrix 
+          is_target: 1d array, boolean, True if rowcol being flashed is target     
     """
 
     # define file path
@@ -54,15 +55,12 @@ def load_training_eeg(data_directory = "P300Data/", subject = 3):
 
 def plot_raw_eeg(eeg_time, eeg_data, rowcol_id, is_target, subject):
     """
-    plot_raw_eeg
-
-    plot p300 eeg data
-
-    eeg_time    (narray) : eegtime
-    eeg_data    (narray) : eeg data
-    rowcol_id   (narray) : (int) row/col id
-    is_target   (narray) : (bool) target
-    subject        (int) : subject to the p300 data
+    Args: 
+        eeg_time    (narray) : eegtime
+        eeg_data    (narray) : eeg data
+        rowcol_id   (narray) : (int) row/col id
+        is_target   (narray) : (bool) target
+        subject        (int) : subject to the p300 data
 
     """
 
@@ -111,12 +109,9 @@ def plot_raw_eeg(eeg_time, eeg_data, rowcol_id, is_target, subject):
 
 def load_and_plot_all(data_directory, subjects):
     """
-    load_and_plot_all
-
-    load and plot given subjects collectively
-
-    data_directory (string) : directory path to the p300 data  
-    subjects          (int) : subjects of the data
+    Args: 
+        data_directory (string) : directory path to the p300 data  
+        subjects          (int) : subjects of the data
 
     """
     # run multiple subjects using for loop
