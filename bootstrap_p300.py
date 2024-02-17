@@ -101,7 +101,7 @@ def bootstrap_erp(eeg, size=None):
     if size == None:        
         size = ntrials        
 
-    rand_index = np.random.randint(ntrials, size=size)   
+    rand_index = np.random.choice(np.arange(0, ntrials), size, replace=False)
 
     bootstrapped_eeg = eeg[rand_index]     
 
@@ -252,13 +252,16 @@ for i in range(0, 8):
 
 
 # # %%
-# # call load and plot functions from load_p300_data module
-# eeg_time, eeg_data, rowcol_id, is_target = load_p300_data.load_training_eeg()
 
-# event_sample, is_target_event = plot_p300_erps.get_events(rowcol_id, is_target)
-# eeg_epochs, erp_times = plot_p300_erps.epoch_data(eeg_time, eeg_data, event_sample)
 # %%
-plot_statistically_significant(is_significant)
-# %%
+    # call load and plot functions from load_p300_data module
+eeg_time, eeg_data, rowcol_id, is_target = load_p300_data.load_training_eeg()
 
+event_sample, is_target_event = plot_p300_erps.get_events(rowcol_id, is_target)
+eeg_epochs, erp_times = plot_p300_erps.epoch_data(eeg_time, eeg_data, event_sample)
+print(reject_fdr.shape)
+sum_fdr_result = reject_fdr.transpose(1,2,0).sum(axis=2)
+plot_subjects(sum_fdr_result,erp_times)
+# %%
+plot_subjects
 # %%
