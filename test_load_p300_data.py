@@ -44,7 +44,9 @@ eeg_data  = np.array(train_data[1:9])
 rowcol_id = np.array(train_data[9], dtype = int)
 is_target = np.array(train_data[10], dtype = bool)
 
-
+print(eeg_data.shape)
+print(is_target.shape)
+print(rowcol_id.sum())
 #%%
 # Create a figure with 1 column and 3 rows of subplots
 fig, axs = plt.subplots(3, 1, figsize=(8, 12), sharex=True)

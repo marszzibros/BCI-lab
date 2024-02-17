@@ -156,4 +156,5 @@ def plot_erps(target_erp, nontarget_erp, erp_times):
             else:
                 fig.delaxes(ax)
 
-    return fig, axes
+    plt.tight_layout()
+    plt.show()
