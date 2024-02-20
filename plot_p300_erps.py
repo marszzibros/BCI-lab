@@ -156,5 +156,25 @@ def plot_erps(target_erp, nontarget_erp, erp_times):
             else:
                 fig.delaxes(ax)
 
-    plt.tight_layout()
-    plt.show()
+    return fig, axes
+
+def plot_save_graph (filename = "sample.png", directory_path = "output/", fig=None):
+    """
+    save graph
+
+    Parameters
+    ----------
+    filename: string, optional
+        Rejected FDR, True if below p < p_value
+    directory_path : string, optional
+        Plotted points (x-axis)
+
+    Returns
+    -------
+    fig : matplotlib object
+        For future usage (i.e. adding scatter plots, etc...)
+    axes : 3x3 array
+        axes information after plotting confidence intervals
+
+    """
+    pass

@@ -150,6 +150,13 @@ coord = np.array([matrix[:,0].T,
 def unique(sequence):
     """
     remove repeated words
+
+    Args
+    sequence, array
+        sequence of row col id
+
+    Returns
+    list of unique sequence
     """
     seen = set()
     return [x for x in sequence if not (x in seen or seen.add(x))]
@@ -157,6 +164,15 @@ def unique(sequence):
 def ordered_intersection(arr1, arr2):
     """
     Custom function to find the ordered intersection
+
+    Args
+    arr1, array
+        array of sequence
+    arr2, array
+        array of sequence
+
+    Return
+    return the ordered intersection of arr1 and arr2
     """
     return [elem for elem in arr1 if elem in arr2]
 
@@ -164,6 +180,14 @@ def ordered_intersection(arr1, arr2):
 def get_word_from_subject(subject = 3):
     """
     extract words from eeg data
+    
+    Args
+    subject, int
+        subject id
+
+    Return
+    word_list, list
+        contains a word 
     """
     # get data
     eeg_time, eeg_data, rowcol_id, is_target = load_training_eeg(subject=subject)
@@ -220,6 +244,15 @@ def get_word_from_subject(subject = 3):
 def get_intersections (subject1 = 3, subject2 = 4):
     """
     get intersection of two subjects to guess the word they are asked to type
+
+    Args
+    subject1, int
+        subject id
+    subject2, int
+        subject id
+
+    Returns
+        intersections of words within subjects
     """
     subject1_word = get_word_from_subject(subject1)
     subject2_word = get_word_from_subject(subject2)
@@ -229,6 +262,12 @@ def get_intersections (subject1 = 3, subject2 = 4):
 def calculate_word_per_min (subject = 3):
     """
     calculate word per minute using the eeg time and word count
+
+    Args
+    subject, int
+
+    Returns
+        calculate the time elapsed
     """
     eeg_time, eeg_data, rowcol_id, is_target = load_training_eeg(subject=subject)
     word = get_word_from_subject(subject=subject)
