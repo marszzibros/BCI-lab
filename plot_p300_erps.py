@@ -54,7 +54,7 @@ def epoch_data (eeg_time, eeg_data, event_sample, epoch_start_time = -0.5, epoch
     # calculate samples_per_epoch
     samples_per_epoch = (samples_per_second - 1)* seconds_per_epoch
 
-    # calculate 0.5 second before and 1 second after the event
+    # calculate epoch_start_time before and epoch_end_time second after the event
     event_before = int(round((abs(epoch_start_time) / seconds_per_epoch) * samples_per_epoch))
     event_after = int(round((abs(epoch_end_time) / seconds_per_epoch) * samples_per_epoch))
 
@@ -155,26 +155,6 @@ def plot_erps(target_erp, nontarget_erp, erp_times):
             # Remove empty subplots
             else:
                 fig.delaxes(ax)
-
+    fig.tight_layout()
     return fig, axes
 
-def plot_save_graph (filename = "sample.png", directory_path = "output/", fig=None):
-    """
-    save graph
-
-    Parameters
-    ----------
-    filename: string, optional
-        Rejected FDR, True if below p < p_value
-    directory_path : string, optional
-        Plotted points (x-axis)
-
-    Returns
-    -------
-    fig : matplotlib object
-        For future usage (i.e. adding scatter plots, etc...)
-    axes : 3x3 array
-        axes information after plotting confidence intervals
-
-    """
-    pass

@@ -1,5 +1,17 @@
-import numpy as np
+
+from bootstrap_p300 import *
+p_values = []
+for i in range(3, 11):
+    p_values.append(calculate_bootstrap_p_values(subject = i))
 
 
-target_indices = np.random.choice(8, size=8, replace=True)
-print(target_indices)
+p_values = np.array(p_values, dtype = np.float64)
+reject_fdr, p_values_fdr = fdr_correction_check(p_values, 0.05)
+
+# call load and plot functions from load_p300_data module
+eeg_time, eeg_data, rowcol_id, is_target = load_p300_data.load_training_eeg()
+event_sample, is_target_event = plot_p300_erps.get_events(rowcol_id, is_target)
+eeg_epochs, erp_times = plot_p300_erps.epoch_data(eeg_time, eeg_data, event_sample,epoch_start_time=-1, epoch_end_time=2)
+
+fig, axes = plot_statistically_significant_by_subjects(reject_fdr,erp_times)
+plot_save_graph(filename=f"subject_stats.png", fig = fig)

@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm,ttest_rel
 from mne.stats import fdr_correction
+from pathlib import Path
 
 def bootstrap_erp(eeg, size=None): 
     """
@@ -170,7 +171,7 @@ def plot_confidence_intervals (confident_intervals = 0.95, subject = 3, data_dir
     """
 
     # calcualte z_value
-    z_value = norm.ppf((1 + (confident_intervals / 100)) / 2)
+    z_value = norm.ppf((1 + (confident_intervals)) / 2)
 
     # call load and plot functions from load_p300_data module
     eeg_time, eeg_data, rowcol_id, is_target = load_p300_data.load_training_eeg(data_directory = data_directory , 
@@ -213,22 +214,22 @@ def plot_confidence_intervals (confident_intervals = 0.95, subject = 3, data_dir
                                 np.array(target_erp[plot_index] + confidence_interval_target[plot_index],dtype=np.float64), 
                                 alpha=0.3,
                                 color="C0",
-                                label=f'Target +/- {confident_intervals * 100}% CI')
+                                label=f'Target +/- {confident_intervals}% CI')
                 
                 ax.fill_between(erp_times, 
                                 np.array(nontarget_erp[plot_index] - confidence_interval_nontarget[plot_index],dtype=np.float64), 
                                 np.array(nontarget_erp[plot_index] + confidence_interval_nontarget[plot_index],dtype=np.float64), 
                                 alpha=0.3,
                                 color="C1",
-                                label=f'Nontarget +/- {confident_intervals * 100}% CI')
+                                label=f'Nontarget +/- {confident_intervals}% CI')
                 
                 # Add legend to the last subplot
                 if plot_index == 7:
                     ax.legend()
-
+    fig.tight_layout()
     return fig, axes, erp_times
 
-def plot_statistically_significant(reject_fdr, subject = 3, data_directory = "P300Data/", confident_intervals = 95, p_value = 0.05):
+def plot_statistically_significant(reject_fdr, subject = 3, data_directory = "P300Data/", confident_intervals = 0.95, p_value = 0.05):
     """
     plot a scatterplot of statistically significant point by channel
 
@@ -271,12 +272,11 @@ def plot_statistically_significant(reject_fdr, subject = 3, data_directory = "P3
     # plot scatter plot
     for channel_index, time_point in zip(*true_indices):
         ax = axes[ax_list[channel_index][0], ax_list[channel_index][1]]
-        ax.scatter(erp_times[time_point], 0, color='black',s=10)
-        if channel_index == 8:
-            ax.scatter(erp_times[time_point], 0, color='black',s=10, label= f"p < {p_value}")
-            ax.legend()
+        ax.scatter(erp_times[time_point], 0, color='black',s=10, label= f"p < {p_value}")
 
+    axes[2,1].legend()
 
+    fig.tight_layout()
     return fig, axes, erp_times
 
 def plot_statistically_significant_by_subjects (rejected_fdr, erp_times):
@@ -332,5 +332,29 @@ def plot_statistically_significant_by_subjects (rejected_fdr, erp_times):
             # Remove empty subplots
             else:
                 fig.delaxes(ax)
- 
+
+    fig.tight_layout()
+
     return fig, axes
+
+def plot_save_graph (filename = "sample.png", directory_path = "output/", fig=None):
+    """
+    save graph
+
+    Parameters
+    ----------
+    filename: string, optional
+        Rejected FDR, True if below p < p_value
+    directory_path : string, optional
+        Plotted points (x-axis)
+    fig : matplotlib object
+        For future usage (i.e. adding scatter plots, etc...)
+    """
+
+    # make directory
+    new_directory = Path(directory_path)
+    new_directory.mkdir(parents=True, exist_ok=True)
+
+    fig.tight_layout()
+    # save figure
+    fig.savefig(directory_path + filename)
