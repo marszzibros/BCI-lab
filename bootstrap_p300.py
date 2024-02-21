@@ -350,25 +350,6 @@ def plot_statistically_significant_by_subjects (rejected_fdr, erp_times):
 
     return fig, axes
 
-def get_median_erps (eeg_epochs, is_target_event):
-    """
-    get median erps
-    Args:
-        eeg_epochs: 3d array of size (event_samples.shape[1], samples_per_epoch, eeg_data.shape[0]) that contains 
-        all eeg_epochs (both target and non-target). 
-        is_target_event: 1d array of size (event_samples.shape[1]), boolean mask for each event in event_sample, True if target event
-
-    Returns:
-        target_erp: 2d array of size (samples_per_epoch, eeg_data.shape[0]) where eeg_data.shape[0] refers to number of EEG channels. Mean 
-        ERP of all epochs that are labelled as target epochs 
-        nontarget_erp: 2d array of size (samples_per_epoch, eeg_data.shape[0]). Mean ERP of all epochs that are labelled as non-target epochs. 
-        
-    """
-
-    target_erp = np.median(eeg_epochs[is_target_event], axis = 0)
-    nontarget_erp = np.median(eeg_epochs[~is_target_event], axis = 0)
-    return target_erp, nontarget_erp
-
 def plot_save_graph (filename = "sample.png", directory_path = "output/", fig=None):
     """
     save graph

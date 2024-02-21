@@ -69,10 +69,15 @@ p3b_time_range_stamps = [0.25, 0.5]
 # get N2 and p3b epoch erps and time ranges
 
 n2_eeg_epoch, n2_time_range     = plot_p300_erps.epoch_data(eeg_time, eeg_data, event_sample, epoch_start_time=n2_time_range_stamps[0], epoch_end_time=n2_time_range_stamps[1])
-target_erp_n2, nontarget_erp_n2 = get_median_erps(n2_eeg_epoch, is_target_event)
+
+target_erp_n2 = np.median(n2_eeg_epoch[is_target_event], axis = 0)
+nontarget_erp_n2 = np.median(n2_eeg_epoch[~is_target_event], axis = 0)
+
 # calculate median_erps
 p3b_eeg_epoch, p3b_time_range = plot_p300_erps.epoch_data(eeg_time, eeg_data, event_sample, epoch_start_time=p3b_time_range_stamps[0], epoch_end_time=p3b_time_range_stamps[1])
-target_erp_p3b, nontarget_erp_p3b = get_median_erps(p3b_eeg_epoch, is_target_event)
+
+target_erp_p3b = np.median(p3b_eeg_epoch[is_target_event], axis = 0)
+nontarget_erp_p3b = np.median(p3b_eeg_epoch[~is_target_event], axis = 0)
 
 # IMPORTANT
 #
