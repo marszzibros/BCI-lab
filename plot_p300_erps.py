@@ -117,6 +117,9 @@ def plot_erps(target_erp, nontarget_erp, erp_times):
     # Create a 3x3 subplot grid for 8 plots
     fig, axes = plt.subplots(3, 3, figsize=(12, 8))
 
+    # plot scatter plot
+    handles, labels = [], []
+
     # Plot each subplot
     for row_ind in range(3):
         for col_ind in range(3):
@@ -152,11 +155,15 @@ def plot_erps(target_erp, nontarget_erp, erp_times):
                 
                 # Add legend to the last subplot
                 if plot_index == 7:
-                    ax.legend()
-
-            # Remove empty subplots
+                    handles, labels = ax.get_legend_handles_labels()
             else:
-                fig.delaxes(ax)
+                for side in ['top','right','bottom','left']:
+                    ax.spines[side].set_visible(False)
+                ax.tick_params(axis='both',which='both',labelbottom=False,bottom=False,left=False)
+                ax.set_yticks([])
+                ax.legend(handles, labels)
+
+
     fig.tight_layout()
     return fig, axes
 

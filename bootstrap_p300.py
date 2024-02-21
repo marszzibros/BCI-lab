@@ -225,7 +225,13 @@ def plot_confidence_intervals (confident_intervals = 0.95, subject = 3, data_dir
                 
                 # Add legend to the last subplot
                 if plot_index == 7:
-                    ax.legend()
+                    handles, labels = ax.get_legend_handles_labels()
+            else:
+                for side in ['top','right','bottom','left']:
+                    ax.spines[side].set_visible(False)
+                ax.tick_params(axis='both',which='both',labelbottom=False,bottom=False,left=False)
+                ax.set_yticks([])
+                ax.legend(handles, labels)
     fig.tight_layout()
     return fig, axes, erp_times
 
@@ -271,13 +277,14 @@ def plot_statistically_significant(reject_fdr, subject = 3, data_directory = "P3
 
     # plot scatter plot
     handles, labels = [], []
-    for channel_index, time_point in zip(*true_indices):
+    for plot_index, (channel_index, time_point) in enumerate(zip(*true_indices)):
         ax = axes[ax_list[channel_index][0], ax_list[channel_index][1]]
-        ax.scatter(erp_times[time_point], 0, color='black',s=10, label= f"p < {p_value}")
+        ax.scatter(erp_times[time_point], 0, color='black',s=10)
+        if plot_index == len(true_indices):
+            ax.scatter(erp_times[time_point], 0, color='black',s=10, label= f"p < {p_value}")
+            handles, labels = ax.get_legend_handles_labels()
 
-        handles, labels = ax.get_legend_handles_labels()
-
-    axes[2,1].legend(handles, labels)
+    axes[2,2].legend(handles, labels)
 
     fig.tight_layout()
     return fig, axes, erp_times
@@ -330,15 +337,37 @@ def plot_statistically_significant_by_subjects (rejected_fdr, erp_times):
                 
                 # Add legend to the last subplot
                 if plot_index == 7:
-                    ax.legend()
- 
-            # Remove empty subplots
+                    handles, labels = ax.get_legend_handles_labels()
             else:
-                fig.delaxes(ax)
+                for side in ['top','right','bottom','left']:
+                    ax.spines[side].set_visible(False)
+                ax.tick_params(axis='both',which='both',labelbottom=False,bottom=False,left=False)
+                ax.set_yticks([])
+                ax.legend(handles, labels)
+ 
 
     fig.tight_layout()
 
     return fig, axes
+
+def get_median_erps (eeg_epochs, is_target_event):
+    """
+    get median erps
+    Args:
+        eeg_epochs: 3d array of size (event_samples.shape[1], samples_per_epoch, eeg_data.shape[0]) that contains 
+        all eeg_epochs (both target and non-target). 
+        is_target_event: 1d array of size (event_samples.shape[1]), boolean mask for each event in event_sample, True if target event
+
+    Returns:
+        target_erp: 2d array of size (samples_per_epoch, eeg_data.shape[0]) where eeg_data.shape[0] refers to number of EEG channels. Mean 
+        ERP of all epochs that are labelled as target epochs 
+        nontarget_erp: 2d array of size (samples_per_epoch, eeg_data.shape[0]). Mean ERP of all epochs that are labelled as non-target epochs. 
+        
+    """
+
+    target_erp = np.median(eeg_epochs[is_target_event], axis = 0)
+    nontarget_erp = np.median(eeg_epochs[~is_target_event], axis = 0)
+    return target_erp, nontarget_erp
 
 def plot_save_graph (filename = "sample.png", directory_path = "output/", fig=None):
     """
@@ -361,3 +390,4 @@ def plot_save_graph (filename = "sample.png", directory_path = "output/", fig=No
     fig.tight_layout()
     # save figure
     fig.savefig(directory_path + filename)
+
