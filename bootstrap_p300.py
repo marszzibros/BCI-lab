@@ -57,7 +57,7 @@ def bootstrap_stat(eeg_epochs, is_target_event):
     """
 
     # get size of each samples
-    target_trials = len(is_target_event.sum())
+    target_trials = np.count_nonzero(is_target_event)
     nontarget_trials = len(is_target_event) - target_trials
     
     # get bootstrap of each type of trials (target, and nontarget)
