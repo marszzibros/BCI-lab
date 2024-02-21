@@ -1,5 +1,4 @@
 
-#%%
 import plot_p300_erps
 import load_p300_data
 import plot_topo
@@ -181,6 +180,9 @@ def plot_confidence_intervals (confident_intervals = 0.95, subject = 3, data_dir
     eeg_epochs, erp_times = plot_p300_erps.epoch_data(eeg_time, eeg_data, event_sample)
     target_erp, nontarget_erp= plot_p300_erps.get_erps(eeg_epochs, is_target_event)
 
+    # get plotted erp graph
+    fig, axes = plot_p300_erps.plot_erps(target_erp, nontarget_erp, erp_times)
+
     # Transpose target_erp/nontarget_erp to the desired dimensions
     target_erp = target_erp.T 
     nontarget_erp = nontarget_erp.T  
@@ -196,8 +198,6 @@ def plot_confidence_intervals (confident_intervals = 0.95, subject = 3, data_dir
     sem_nontarget_erps = np.std(eeg_epochs[~is_target_event].transpose((2,1,0)), axis=2) / np.sqrt(eeg_epochs[~is_target_event].shape[0])
     confidence_interval_nontarget = z_value * sem_nontarget_erps
 
-    # get plotted erp graph
-    fig, axes = plot_p300_erps.plot_erps(target_erp, nontarget_erp, erp_times)
 
     for row_ind in range(3):
         for col_ind in range(3):
@@ -271,8 +271,11 @@ def plot_statistically_significant(reject_fdr, subject = 3, data_directory = "P3
     # plot scatter plot
     for channel_index, time_point in zip(*true_indices):
         ax = axes[ax_list[channel_index][0], ax_list[channel_index][1]]
-        ax.scatter(erp_times[time_point], 0, color='black',s=10, label= f"p < {p_value}")
-    axes[3, 2].legend()
+        ax.scatter(erp_times[time_point], 0, color='black',s=10)
+        if channel_index == 8:
+            ax.scatter(erp_times[time_point], 0, color='black',s=10, label= f"p < {p_value}")
+            ax.legend()
+
 
     return fig, axes, erp_times
 
@@ -295,7 +298,7 @@ def plot_statistically_significant_by_subjects (rejected_fdr, erp_times):
         axes information after plotting confidence intervals
 
     """
-
+    
     rejected_fdr = rejected_fdr.transpose(1,2,0).sum(axis=2)
 
     # Create a 3x3 subplot grid for 8 plots
