@@ -1,7 +1,7 @@
 
 import plot_p300_erps
 import load_p300_data
-import plot_topo
+from plot_topo import *
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -270,11 +270,14 @@ def plot_statistically_significant(reject_fdr, subject = 3, data_directory = "P3
             ax_list.append((row_ind, col_ind))
 
     # plot scatter plot
+    handles, labels = [], []
     for channel_index, time_point in zip(*true_indices):
         ax = axes[ax_list[channel_index][0], ax_list[channel_index][1]]
         ax.scatter(erp_times[time_point], 0, color='black',s=10, label= f"p < {p_value}")
 
-    axes[2,1].legend()
+        handles, labels = ax.get_legend_handles_labels()
+
+    axes[2,1].legend(handles, labels)
 
     fig.tight_layout()
     return fig, axes, erp_times
@@ -303,7 +306,7 @@ def plot_statistically_significant_by_subjects (rejected_fdr, erp_times):
 
     # Create a 3x3 subplot grid for 8 plots
     fig, axes = plt.subplots(3, 3, figsize=(12, 8))
- 
+
     # Plot each subplot
     for row_ind in range(3):
         for col_ind in range(3):

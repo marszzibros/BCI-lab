@@ -9,6 +9,7 @@ Created on Thu Jan 18 15:25:31 2024
 """
 import numpy as np
 from matplotlib import pyplot as plt
+import math
 
 def get_events(rowcol_id, is_target):
     """Args:
@@ -55,8 +56,8 @@ def epoch_data (eeg_time, eeg_data, event_sample, epoch_start_time = -0.5, epoch
     samples_per_epoch = (samples_per_second - 1)* seconds_per_epoch
 
     # calculate epoch_start_time before and epoch_end_time second after the event
-    event_before = int(round((abs(epoch_start_time) / seconds_per_epoch) * samples_per_epoch))
-    event_after = int(round((abs(epoch_end_time) / seconds_per_epoch) * samples_per_epoch))
+    event_before = int(math.ceil((abs(epoch_start_time) / seconds_per_epoch) * samples_per_epoch))
+    event_after = int(math.ceil((abs(epoch_end_time) / seconds_per_epoch) * samples_per_epoch))
 
     # define the array based on the dimensions
     # 0 d: pages (epochs) 
@@ -65,15 +66,16 @@ def epoch_data (eeg_time, eeg_data, event_sample, epoch_start_time = -0.5, epoch
     eeg_epochs = np.empty((event_sample.shape[1], int(samples_per_epoch), eeg_data.shape[0]), dtype = object)
     erp_times = np.linspace(epoch_start_time,epoch_end_time,int(samples_per_epoch))
 
-    for evnet_ind, event in enumerate(event_sample[0]):
+    for event_ind, event in enumerate(event_sample[0]):
         epoch = []
         
         # get eeg data for each event
-        for eeg_time_ind in range(event - event_before, event + event_after):
+        for eeg_time_ind in range(event - event_before, event - event_before + int(samples_per_epoch)):
 
             epoch.append(eeg_data.T[eeg_time_ind])
-        eeg_epochs[evnet_ind] = np.array(epoch, dtype=np.float64)
 
+        eeg_epochs[event_ind] = np.array(epoch, dtype=np.float64)
+   
     return eeg_epochs, erp_times
 
 def get_erps (eeg_epochs, is_target_event):
