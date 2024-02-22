@@ -1,4 +1,10 @@
-
+"""
+File Name: bootstrap_p300.py
+ 
+Contains functions for analyzing EEG data related to P300 ERP across several subjects for the P300 Speller. It contains fucntions to get confidence intervals, bootstrap ERPs, perform FDR correction check, save grahps, and plot subject scalp maps.
+ 
+Authors: Jay Hwasung Jung and Nick Hanna
+""" 
 import plot_p300_erps
 import load_p300_data
 from plot_topo import *
