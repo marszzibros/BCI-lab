@@ -1,16 +1,16 @@
 """
 File Name: test_bootstrap_p300.py
  
-Contains functions for analyzing EEG data related to P300 ERP across several subjects for the P300 Speller. It contains fucntions to get confidence intervals, bootstrap ERPs, perform FDR correction check, save grahps, and plot subject scalp maps.
+Implements functions analyzing EEG data related to P300 ERP across several subjects for the P300 Speller. 
  
 Authors: Jay Hwasung Jung and Nick Hanna
 """ 
-
 
 #%%
 # import necessary modules
 from bootstrap_p300 import *
 from plot_topo import *
+
 #%%
 # Part B Calculate & Plot Parametric Confidence Intervals
 #
@@ -97,7 +97,7 @@ nontarget_erp_p3b = np.median(p3b_eeg_epoch[~is_target_event], axis = 0)
 # plot topology
 im, colorbar = plot_topo(channel_names, target_erp_n2.T, title="N2")
 cbar_fig = colorbar.ax.figure
-cbar_fig.savefig(f"output/topo_target_N2_{1}.png")
+cbar_fig.savefig(f"output/topo_target_N2.png")
 
 im, colorbar = plot_topo(channel_names, target_erp_p3b.T, title="P3b")
 cbar_fig = colorbar.ax.figure
@@ -109,6 +109,4 @@ cbar_fig.savefig(f"output/topo_nontarget_N2.png")
 im, colorbar = plot_topo(channel_names, nontarget_erp_p3b.T, title="P3b")
 cbar_fig = colorbar.ax.figure
 cbar_fig.savefig(f"output/topo_nontarget_P3b")
-
-
 # %%

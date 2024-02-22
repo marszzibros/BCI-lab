@@ -16,6 +16,8 @@ import loadmat
 
 def load_training_eeg(data_directory = "P300Data/", subject = 3):
     """
+    load eeg
+
      Args: 
           data_directory: string, file path to the data
           subject: int, subject number to be loaded
@@ -55,6 +57,7 @@ def load_training_eeg(data_directory = "P300Data/", subject = 3):
 
 def plot_raw_eeg(eeg_time, eeg_data, rowcol_id, is_target, subject):
     """
+    plot raw eeg
     Args: 
         eeg_time    (narray) : eegtime
         eeg_data    (narray) : eeg data

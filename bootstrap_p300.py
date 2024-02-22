@@ -17,18 +17,21 @@ from pathlib import Path
 
 def bootstrap_erp(eeg, size=None): 
     """
+    Description
+    ----------
     bootstrap erp from eeg data
+    N is the number of epochs, P is the number of samples in each epoch, and C is the number of channels
 
     Parameters
     ----------
-    eeg : float 3d array, required
+    eeg : NxPxC array of float, required
         eeg data, target/nontarget combined under null hyposthesis (no difference)
     size : int, optional
         size to be sampled
 
     Returns
     -------
-    bootstrapped_erp : 2d array
+    bootstrapped_erp : P x C array
         averaged through trials (0 dimension)
     """
     # get number of trials
@@ -48,17 +51,21 @@ def bootstrap_erp(eeg, size=None):
 
 def bootstrap_stat(eeg_epochs, is_target_event):
     """
+    Description
+    -----------
     bootstrap erp from eeg data
+    N is the number of epochs, P is the number of samples in each epoch, and C is the number of channels
 
     Parameters
     ----------
-    eeg_epochs : float 3d array, required
+    eeg_epochs : NxPxC array of float, required
         eeg data, target/nontarget combined under null hyposthesis (no difference)
-    is_target_event : boolean 1d array, required
+    is_target_event Nx1: boolean array, required
         is_target event 
+
     Returns
     -------
-    absolute_difference : 2d array
+    absolute_difference : C x P array
         averaged through trials (dimension 0)
     """
 
@@ -78,7 +85,10 @@ def bootstrap_stat(eeg_epochs, is_target_event):
 
 def calculate_bootstrap_p_values(iterations = 3000, subject = 3, data_directory = "P300Data/"):
     """
+    Description
+    ----------
     calculate bootsraped p values
+    N is the number of epochs, P is the number of samples in each epoch, and C is the number of channels
 
     Parameters
     ----------
@@ -91,8 +101,8 @@ def calculate_bootstrap_p_values(iterations = 3000, subject = 3, data_directory 
 
     Returns
     -------
-    p_values : 2d array (channel, time)
-        calculated p_values
+    p_values : C x P array 
+        calculated p values
 
     """
     # call load and plot functions from load_p300_data module
@@ -132,20 +142,24 @@ def calculate_bootstrap_p_values(iterations = 3000, subject = 3, data_directory 
 
 def fdr_correction_check (p_values, p_value = 0.05):
     """
+    Description
+    ----------
     Make a correction based on the FDR (False Discovery Rate)
 
     Parameters
     ----------
-    p_values : int, required
+    p_values : array-like (following mne.stats.fdr_correction documentation), required
         p_values to be checked by fdr correction
     p_value : int, optional
         statistically significant p_value
 
     Returns
     -------
-    fdr_corrected_values : 3d array (2, channel, time)
-        calculated p_values
-
+    fdr_corrected_values : return size 2 tuple
+        reject : array, bool
+            True if a hypothesis is rejected, False if not.
+        pval_corrected : array
+            P-values adjusted for multiple hypothesis testing to limit FDR.
     """
     # call mne.stats fdr_correction
     fdr_corrected_values = fdr_correction(p_values, p_value)
@@ -154,8 +168,11 @@ def fdr_correction_check (p_values, p_value = 0.05):
 
 def plot_confidence_intervals (confident_intervals = 0.95, subject = 3, data_directory = "P300Data/"):
     """
+    Description
+    ----------    
     plot a confidence intervals specified by users
-
+    N is the number of epochs, P is the number of samples in each epoch, and C is the number of channels
+    
     Parameters
     ----------
     confident_intervals : float, optional
@@ -171,7 +188,7 @@ def plot_confidence_intervals (confident_intervals = 0.95, subject = 3, data_dir
         For future usage (i.e. adding scatter plots, etc...)
     axes : 3x3 array
         axes information after plotting confidence intervals
-    erp_times : 1d array
+    erp_times : P x 1 array
         Plotted points (x-axis)
 
     """
@@ -238,16 +255,20 @@ def plot_confidence_intervals (confident_intervals = 0.95, subject = 3, data_dir
                 ax.tick_params(axis='both',which='both',labelbottom=False,bottom=False,left=False)
                 ax.set_yticks([])
                 ax.legend(handles, labels)
+
     fig.tight_layout()
     return fig, axes, erp_times
 
 def plot_statistically_significant(reject_fdr, subject = 3, data_directory = "P300Data/", confident_intervals = 0.95, p_value = 0.05):
     """
+    Description
+    ----------    
     plot a scatterplot of statistically significant point by channel
+    N is the number of epochs, P is the number of samples in each epoch, and C is the number of channels
 
     Parameters
     ----------
-    reject_fdr: 2d array, required
+    reject_fdr: C x P array, required
         Rejected FDR, True if below p < p_value
     confident_intervals : float, optional
         Confident intervals to be plotted
@@ -264,7 +285,7 @@ def plot_statistically_significant(reject_fdr, subject = 3, data_directory = "P3
         For future usage (i.e. adding scatter plots, etc...)
     axes : 3x3 array
         axes information after plotting confidence intervals
-    erp_times : 1d array
+    erp_times : P x 1 array
         Plotted points (x-axis)
 
     """
@@ -285,32 +306,34 @@ def plot_statistically_significant(reject_fdr, subject = 3, data_directory = "P3
     handles, labels = [], []
     for plot_index, (channel_index, time_point) in enumerate(zip(*true_indices)):
         ax = axes[ax_list[channel_index][0], ax_list[channel_index][1]]
-        ax.scatter(erp_times[time_point], 0, color='black',s=10)
+        ax.scatter(erp_times[time_point], 0, color='black',s=20, zorder=5)
         if plot_index == len(true_indices):
-            ax.scatter(erp_times[time_point], 0, color='black',s=10, label= f"p < {p_value}")
+            ax.scatter(erp_times[time_point], 0, color='black',s=20, label= f"p < {p_value}", zorder=5)
             handles, labels = ax.get_legend_handles_labels()
 
     axes[2,2].legend(handles, labels)
-
     fig.tight_layout()
     return fig, axes, erp_times
 
 def plot_statistically_significant_by_subjects (rejected_fdr, erp_times):
     """
+    Description
+    ----------     
     plot a scatterplot of statistically significant point by channel
+    S is the number of subjects, P is the number of samples in each epoch, and C is the number of channels
 
     Parameters
     ----------
-    reject_fdr: 2d array, required
+    reject_fdr: S x C x P array, required
         Rejected FDR, True if below p < p_value
-    erp_times : 1d array
+    erp_times P x 1: 1d array
         Plotted points (x-axis)
 
     Returns
     -------
     fig : matplotlib object
         For future usage (i.e. adding scatter plots, etc...)
-    axes : 3x3 array
+    axes : 3 x 3 array
         axes information after plotting confidence intervals
 
     """
@@ -358,6 +381,8 @@ def plot_statistically_significant_by_subjects (rejected_fdr, erp_times):
 
 def plot_save_graph (filename = "sample.png", directory_path = "output/", fig=None):
     """
+    Description
+    ----------     
     save graph
 
     Parameters

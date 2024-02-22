@@ -12,10 +12,18 @@ from matplotlib import pyplot as plt
 import math
 
 def get_events(rowcol_id, is_target):
-    """Args:
+    """
+    Description
+    ----------     
+    get events with rowcol_id and is_target
+
+    Args
+    ----------     
         rowcol_id: 1d array of ints, 0 for no rowcol and 1-12 for rowcols on the P300 matrix 
         is_target: 1d array, boolean, True if rowcol being flashed is target     
-       Returns:
+    
+    Returns
+    ----------     
         event_sample: 1d array of ints (indices) where a rowcol is being flashed
         is_target_event: 1d array, boolean mask of length equal to event_sample. True if the event is a target event. 
     """
@@ -29,19 +37,26 @@ def get_events(rowcol_id, is_target):
 
 def epoch_data (eeg_time, eeg_data, event_sample, epoch_start_time = -0.5, epoch_end_time=1):
     """
-     Args: 
-          eeg_time: 1d array (float), time axis in millseconds 
-          eeg_data: 2d array of dimensions channels x samples 
-          event_sample: 1d array (float) of indices where events occurred 
-          epoch_start_time: float, fraction of second before event to start epoch
-          epoch_end_time: float, fraction of second after event to end epoch
-     Returns:
-          eeg_epochs: 3d array of size (event_samples.shape[1], samples_per_epoch, eeg_data.shape[0]) that contains 
-          all eeg_epochs (both target and non-target). 
-          --event_samples.shape[1] is the number of events (both target and non-target). 
-          --eeg_data.shape[0] is number of EEG channels. 
-          --samples_per_epoch is the number of EEG samples (data points) per epoch
-          erp_times: 1d array of size (seconds_per_epoch * samples_per_second), axis of time relative to the event onset 
+    Description
+    ----------     
+    calculate samples per epoch, and create epoch
+
+    Args
+    ----------     
+        eeg_time: 1d array (float), time axis in millseconds 
+        eeg_data: 2d array of dimensions channels x samples 
+        event_sample: 1d array (float) of indices where events occurred 
+        epoch_start_time: float, fraction of second before event to start epoch
+        epoch_end_time: float, fraction of second after event to end epoch
+
+    Returns
+    ----------     
+        eeg_epochs: 3d array of size (event_samples.shape[1], samples_per_epoch, eeg_data.shape[0]) that contains 
+        all eeg_epochs (both target and non-target). 
+        --event_samples.shape[1] is the number of events (both target and non-target). 
+        --eeg_data.shape[0] is number of EEG channels. 
+        --samples_per_epoch is the number of EEG samples (data points) per epoch
+        erp_times: 1d array of size (seconds_per_epoch * samples_per_second), axis of time relative to the event onset 
 
     """
 
@@ -80,12 +95,20 @@ def epoch_data (eeg_time, eeg_data, event_sample, epoch_start_time = -0.5, epoch
 
 def get_erps (eeg_epochs, is_target_event):
     """
-    Args:
+    Description
+    ----------     
+    get ERPs using mean through trials
+
+    Args
+    ----------     
+    calculate samples per epoch, and create epoch
         eeg_epochs: 3d array of size (event_samples.shape[1], samples_per_epoch, eeg_data.shape[0]) that contains 
         all eeg_epochs (both target and non-target). 
         is_target_event: 1d array of size (event_samples.shape[1]), boolean mask for each event in event_sample, True if target event
 
-    Returns:
+    Returns
+    ----------     
+    calculate samples per epoch, and create epoch
         target_erp: 2d array of size (samples_per_epoch, eeg_data.shape[0]) where eeg_data.shape[0] refers to number of EEG channels. Mean 
         ERP of all epochs that are labelled as target epochs 
         nontarget_erp: 2d array of size (samples_per_epoch, eeg_data.shape[0]). Mean ERP of all epochs that are labelled as non-target epochs. 
@@ -97,8 +120,14 @@ def get_erps (eeg_epochs, is_target_event):
 
 
 def plot_erps(target_erp, nontarget_erp, erp_times):
-    """
-    Args:
+    """    
+    Description
+    ----------     
+    plot target and non-target erps
+
+    Args
+    ----------     
+
         target_erp: 2d array of size (samples_per_epoch, eeg_data.shape[0]) where eeg_data.shape[0] refers to number of EEG channels. Mean 
         ERP of all epochs that are labelled as target epochs 
 
@@ -106,7 +135,9 @@ def plot_erps(target_erp, nontarget_erp, erp_times):
         ERP of all epochs that are labelled as nontarget epochs 
 
         erp_times: 1d array of erp time axis, relative to onset of event
-    Returns:
+        
+    Returns
+    ----------     
         fig: matplotlib class, fig information processing
         axes: 3x3 array, axes information after processing
     """
