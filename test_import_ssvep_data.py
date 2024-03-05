@@ -26,5 +26,11 @@ plot_power_spectrum(eeg_epochs_fft=eeg_epochs_fft,
                     subject=2)
 # %%
 print(fft_frequencies * data_dict['fs'])
+print(fft_frequencies[1] - fft_frequencies[0])
+print(fft_frequencies[2] - fft_frequencies[1])
+print(fft_frequencies[3] - fft_frequencies[2])
+print(eeg_epochs_fft.shape)
+print(fft_frequencies)
+print(is_trial_15Hz.shape)
 # %%
 print(data_dict["channels"])

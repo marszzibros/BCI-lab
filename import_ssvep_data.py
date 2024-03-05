@@ -221,7 +221,27 @@ def plot_power_spectrum(eeg_epochs_fft, fft_frequencies, is_trial_15Hz, channels
         the mean power spectrum of 15Hz trials in dB
 
     """
+
+    # calculate N
     
+    num_samples = 0
+    if eeg_epochs_fft.shape[2] % 2 == 0:
+        num_samples = 2 * eeg_epochs_fft.shape[2] - 1
+    else:
+        num_samples = (eeg_epochs_fft.shape[2] - 1) * 2
+
+    # calculate dt
+    sampling_interval = fft_frequencies[1] - fft_frequencies[0]
+
+    # calculate T
+    total_time_recordings = num_samples * sampling_interval
+
+    # calculate df
+    frequency_resolution = 1 / total_time_recordings
+
+    frequency_axis = np.arange(eeg_epochs_fft.shape[2]) * frequency_resolution
+
+
     abs_spectrum_12Hz = np.empty((len(is_trial_15Hz) - is_trial_15Hz.sum(), eeg_epochs_fft.shape[1], eeg_epochs_fft.shape[2]),dtype = np.float64)
     abs_spectrum_15Hz = np.empty((is_trial_15Hz.sum(), eeg_epochs_fft.shape[1], eeg_epochs_fft.shape[2]),dtype = np.float64)
 
@@ -229,46 +249,53 @@ def plot_power_spectrum(eeg_epochs_fft, fft_frequencies, is_trial_15Hz, channels
     count_15Hz = 0
 
     for epoch_index in range(0, eeg_epochs_fft.shape[0]):
+
         if is_trial_15Hz[epoch_index]:
             for channel_index in range(0, eeg_epochs_fft.shape[1]):
-                abs_spectrum_15Hz[count_15Hz][channel_index] = np.abs(eeg_epochs_fft[epoch_index][channel_index])
+                # spectra = 2 * dt ** 2 / T * (xf * xf.conj())
+                # absolute value of the spectrum? not sure
+                spectrum = np.abs(((2 * sampling_interval ** 2) / total_time_recordings) * eeg_epochs_fft[epoch_index][channel_index])
+                
+                # conjugate
+                spectrum = spectrum * eeg_epochs_fft[epoch_index][channel_index].conj()
+
+                abs_spectrum_15Hz[count_15Hz][channel_index] = spectrum.real
             count_15Hz += 1
         else:
             for channel_index in range(0, eeg_epochs_fft.shape[1]):
-                abs_spectrum_12Hz[count_12Hz][channel_index] = np.abs(eeg_epochs_fft[epoch_index][channel_index])
+                spectrum = np.abs(((2 * sampling_interval ** 2) / total_time_recordings) * eeg_epochs_fft[epoch_index][channel_index])
+                
+                # conjugate
+                spectrum = spectrum * eeg_epochs_fft[epoch_index][channel_index].conj()
+
+                abs_spectrum_12Hz[count_12Hz][channel_index] = spectrum.real
             count_12Hz += 1
 
+    mean_trials_12Hz = np.mean(abs_spectrum_12Hz, axis = 0)
+    mean_trials_15Hz = np.mean(abs_spectrum_15Hz, axis = 0)
 
-    abs_spectrum_12Hz = abs_spectrum_12Hz ** 2
-    abs_spectrum_15Hz = abs_spectrum_15Hz ** 2
+    # max of all or each? 
+    max_value_12Hz = np.max(abs_spectrum_12Hz)
+    max_value_15Hz = np.max(abs_spectrum_15Hz)
 
-    normalized_trials_12Hz = abs_spectrum_12Hz / np.amax(abs_spectrum_12Hz)
-    normalized_trials_15Hz = abs_spectrum_15Hz / np.amax(abs_spectrum_15Hz)
+    normalized_spectrum_12Hz = mean_trials_12Hz / max_value_12Hz
+    normalized_spectrum_15Hz = mean_trials_15Hz / max_value_15Hz
 
-    trials_12Hz_in_db = 10 * np.log10(normalized_trials_12Hz)
-    trials_15Hz_in_db = 10 * np.log10(normalized_trials_15Hz)
-
-    trials_12Hz_in_db = trials_12Hz_in_db.transpose(1,2,0)
-    trials_15Hz_in_db = trials_15Hz_in_db.transpose(1,2,0)
-
-    mean_trials_12Hz = np.mean(trials_12Hz_in_db, axis = -1)
-    mean_trials_15Hz = np.mean(trials_15Hz_in_db, axis = -1)
-
-
+    trials_12Hz_in_db = 10 * np.log10(normalized_spectrum_12Hz)
+    trials_15Hz_in_db = 10 * np.log10(normalized_spectrum_15Hz)
 
 
     channel_indexs = []
 
     for channel in channels_to_plot:
         channel_indexs.append(np.where(channels == channel)[0][0])
-    print(channel_indexs)
 
     # Create figure and subplots
     fig, ax = plt.subplots(len(channels_to_plot), 1, sharex=True, figsize=(5 * len(channels_to_plot), 8))
 
     for fig_index, (channel_name, channel_index) in enumerate(zip(channels_to_plot, channel_indexs)):
-        ax[fig_index].plot(fft_frequencies, mean_trials_12Hz[channel_index], color='red', linestyle='-')
-        ax[fig_index].plot(fft_frequencies, mean_trials_15Hz[channel_index], color='green', linestyle='-')
+        ax[fig_index].plot(frequency_axis, trials_12Hz_in_db[channel_index], color='red', linestyle='-')
+        ax[fig_index].plot(frequency_axis, trials_15Hz_in_db[channel_index], color='green', linestyle='-')
 
     plt.tight_layout()
 
