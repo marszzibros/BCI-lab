@@ -138,7 +138,6 @@ def epoch_ssvep_data(data_dict, epoch_start_time = 0, epoch_end_time = 20):
     num_epochs = len(data_dict['event_samples'])
     num_channels = eeg_data.shape[0]
     num_time = int((epoch_end_time - epoch_start_time) * data_dict['fs'])
-    print(num_time)
 
     # Initialize the eeg_epochs array
     eeg_epochs = np.zeros((num_epochs, num_channels, num_time))
