@@ -128,6 +128,7 @@ def epoch_ssvep_data(data_dict, epoch_start_time = 0, epoch_end_time = 20):
         an array in which is_trial_15Hz[i] is True if the light was flashing at 15Hz during trial/epoch i.
 
     """
+    # change units to micro volt
     eeg_data = data_dict['eeg']
 
     # Get events index
@@ -142,7 +143,7 @@ def epoch_ssvep_data(data_dict, epoch_start_time = 0, epoch_end_time = 20):
     eeg_epochs = np.zeros((num_epochs, num_channels, num_time))
 
     for epoch_index, (epoch_start_index, epoch_end_index) in enumerate(zip(epoch_starts, epoch_ends)):
-        epoch_data = eeg_data[:, int(epoch_start_index):int(epoch_end_index)]
+        epoch_data = eeg_data[:, int(epoch_start_index):int(epoch_end_index)] * 1e+6
 
         # Check if the epoch_data does not fill the entire epoch length
         if epoch_data.shape[1] < num_time:
@@ -192,7 +193,7 @@ def get_frequency_spectrum(eeg_epochs, fs):
 
     """
     
-    eeg_epochs_fft = np.fft.rfft(eeg_epochs - eeg_epochs.mean(), axis = -1)
+    eeg_epochs_fft = np.fft.rfft(eeg_epochs - eeg_epochs.mean(), axis = 2)
     fft_frequencies = np.fft.rfftfreq(eeg_epochs.shape[2], 1 / fs)
 
     return eeg_epochs_fft, fft_frequencies
@@ -249,29 +250,9 @@ def plot_power_spectrum(eeg_epochs_fft, fft_frequencies, is_trial_15Hz, channels
     # calculate df
     frequency_resolution = 1 / total_time_recordings
 
-    # calculate fNQ
-    nyquist_frequency = 1 / frequency_resolution / 2
-
-    
-    abs_spectrum_12Hz = np.empty((len(is_trial_15Hz) - is_trial_15Hz.sum(), eeg_epochs_fft.shape[1], eeg_epochs_fft.shape[2]),dtype = np.float64)
-    abs_spectrum_15Hz = np.empty((is_trial_15Hz.sum(), eeg_epochs_fft.shape[1], eeg_epochs_fft.shape[2]),dtype = np.float64)
-
-    # caculating power spectrum
-    count_12Hz = 0
-    count_15Hz = 0
-
-    for epoch_index in range(0, eeg_epochs_fft.shape[0]):
-
-        if is_trial_15Hz[epoch_index]:
-            for channel_index in range(0, eeg_epochs_fft.shape[1]):
-                spectrum = np.abs(eeg_epochs_fft[epoch_index][channel_index] ** 2)
-                abs_spectrum_15Hz[count_15Hz][channel_index] = spectrum.real
-            count_15Hz += 1
-        else:
-            for channel_index in range(0, eeg_epochs_fft.shape[1]):
-                spectrum = np.abs(eeg_epochs_fft[epoch_index][channel_index] ** 2)
-                abs_spectrum_12Hz[count_12Hz][channel_index] = spectrum.real
-            count_12Hz += 1
+    # power specturm calculation by each frequencies
+    abs_spectrum_15Hz = np.abs(eeg_epochs_fft[is_trial_15Hz] ** 2)
+    abs_spectrum_12Hz = np.abs(eeg_epochs_fft[~is_trial_15Hz] ** 2)
 
     # take mean across trials
     mean_trials_12Hz = np.mean(abs_spectrum_12Hz, axis = 0)
