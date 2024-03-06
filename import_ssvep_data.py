@@ -133,24 +133,25 @@ def epoch_ssvep_data(data_dict, epoch_start_time = 0, epoch_end_time = 20):
 
     # Get events index
     epoch_starts = np.array(data_dict['event_samples']) + epoch_start_time * data_dict['fs'] 
-    epoch_ends = epoch_starts + data_dict['fs'] * epoch_end_time
+    epoch_ends = epoch_starts + data_dict['fs'] * (epoch_end_time - epoch_start_time)
 
     num_epochs = len(data_dict['event_samples'])
     num_channels = eeg_data.shape[0]
     num_time = int((epoch_end_time - epoch_start_time) * data_dict['fs'])
+    print(num_time)
 
     # Initialize the eeg_epochs array
     eeg_epochs = np.zeros((num_epochs, num_channels, num_time))
 
     for epoch_index, (epoch_start_index, epoch_end_index) in enumerate(zip(epoch_starts, epoch_ends)):
-        epoch_data = eeg_data[:, int(epoch_start_index):int(epoch_end_index)] * 1e+6
+        epoch_data = eeg_data[:, int(epoch_start_index):int(epoch_end_index)] 
 
         # Check if the epoch_data does not fill the entire epoch length
         if epoch_data.shape[1] < num_time:
             # Fill the lacking part with zeros
             epoch_data = np.pad(epoch_data, ((0, 0), (0, num_time - epoch_data.shape[1])), mode='constant')
 
-        eeg_epochs[epoch_index] = epoch_data
+        eeg_epochs[epoch_index] = epoch_data * 1e+6
 
     eeg_epochs = eeg_epochs.astype(np.float64)
 
@@ -233,38 +234,17 @@ def plot_power_spectrum(eeg_epochs_fft, fft_frequencies, is_trial_15Hz, channels
 
     """
 
-    # calculate N
-    
-    num_samples = 0
-    if eeg_epochs_fft.shape[2] % 2 == 0:
-        num_samples = 2 * eeg_epochs_fft.shape[2] - 1
-    else:
-        num_samples = (eeg_epochs_fft.shape[2] - 1) * 2
-
-    # calculate dt
-    sampling_interval = 1 / (num_samples * (fft_frequencies[1] - fft_frequencies[0]))
-
-    # calculate T
-    total_time_recordings = sampling_interval * num_samples
-
-    # calculate df
-    frequency_resolution = 1 / total_time_recordings
-
     # power specturm calculation by each frequencies
-    abs_spectrum_15Hz = np.abs(eeg_epochs_fft[is_trial_15Hz] ** 2)
-    abs_spectrum_12Hz = np.abs(eeg_epochs_fft[~is_trial_15Hz] ** 2)
+    abs_spectrum_15Hz = np.abs(eeg_epochs_fft[is_trial_15Hz]) * np.abs(eeg_epochs_fft[is_trial_15Hz])
+    abs_spectrum_12Hz = np.abs(eeg_epochs_fft[~is_trial_15Hz]) * np.abs(eeg_epochs_fft[~is_trial_15Hz])
 
     # take mean across trials
     mean_trials_12Hz = np.mean(abs_spectrum_12Hz, axis = 0)
     mean_trials_15Hz = np.mean(abs_spectrum_15Hz, axis = 0)
 
-    # normalize
-    normalized_spectrum_12Hz = mean_trials_12Hz / np.max(mean_trials_12Hz)
-    normalized_spectrum_15Hz = mean_trials_15Hz / np.max(mean_trials_15Hz)
-
     # change it to decibel units
-    spectrum_db_12Hz = 10 * np.log10(normalized_spectrum_12Hz)
-    spectrum_db_15Hz = 10 * np.log10(normalized_spectrum_15Hz)
+    spectrum_db_12Hz = 10 * np.log10(mean_trials_12Hz / np.max(mean_trials_12Hz))
+    spectrum_db_15Hz = 10 * np.log10(mean_trials_15Hz / np.max(mean_trials_15Hz))
 
     # find channel index
     channel_indexs = []
@@ -275,9 +255,6 @@ def plot_power_spectrum(eeg_epochs_fft, fft_frequencies, is_trial_15Hz, channels
 
     # Create figure and subplots
     fig, ax = plt.subplots(len(channels_to_plot), 1, sharex=False , figsize=(5 * len(channels_to_plot), 6))
-
-    # x axis unit convertion
-    frequency_axis = np.arange(eeg_epochs_fft.shape[2]) * frequency_resolution
 
     for fig_index, (channel_name, channel_index) in enumerate(zip(channels_to_plot, channel_indexs)):
 
