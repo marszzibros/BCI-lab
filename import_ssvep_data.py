@@ -234,16 +234,17 @@ def plot_power_spectrum(eeg_epochs_fft, fft_frequencies, is_trial_15Hz, channels
     """
 
     # power specturm calculation by each frequencies
-    abs_spectrum_15Hz = np.abs(eeg_epochs_fft[is_trial_15Hz]) * np.abs(eeg_epochs_fft[is_trial_15Hz])
-    abs_spectrum_12Hz = np.abs(eeg_epochs_fft[~is_trial_15Hz]) * np.abs(eeg_epochs_fft[~is_trial_15Hz])
+    abs_spectrum_15Hz = (np.abs(eeg_epochs_fft[is_trial_15Hz]) * np.abs(eeg_epochs_fft[is_trial_15Hz])).real
+    abs_spectrum_12Hz = (np.abs(eeg_epochs_fft[~is_trial_15Hz]) * np.abs(eeg_epochs_fft[~is_trial_15Hz])).real
 
     # take mean across trials
     mean_trials_12Hz = np.mean(abs_spectrum_12Hz, axis = 0)
     mean_trials_15Hz = np.mean(abs_spectrum_15Hz, axis = 0)
 
     # change it to decibel units
-    spectrum_db_12Hz = 10 * np.log10(mean_trials_12Hz / np.max(mean_trials_12Hz))
-    spectrum_db_15Hz = 10 * np.log10(mean_trials_15Hz / np.max(mean_trials_15Hz))
+
+    spectrum_db_12Hz = 10 * np.log10(mean_trials_12Hz / np.max(mean_trials_12Hz, axis=1)[:, np.newaxis])
+    spectrum_db_15Hz = 10 * np.log10(mean_trials_15Hz / np.max(mean_trials_15Hz, axis=1)[:, np.newaxis])
 
     # find channel index
     channel_indexs = []

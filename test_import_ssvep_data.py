@@ -59,8 +59,4 @@ since the alpha rhythm is associated with this region. This is all happening in 
 where the main visual processing action goes down.
 """
 
-
-# %%
-print(eeg_epochs)
-print(eeg_epochs_fft)
 # %%
