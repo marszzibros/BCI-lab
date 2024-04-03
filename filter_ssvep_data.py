@@ -78,7 +78,8 @@ def make_bandpass_filter(low_cutoff,high_cutoff,filter_order=10,fs=1000,filter_t
     """
     Descriptions
     --------------------------------
-    calculate bandpass filter using scipy.signal firwin and plot
+    calculate bandpass filter using scipy.signal firwin and plot filter impulse
+    and frequency response
     reference: mark-kramer.github.io/Case-Studies-Python
 
     Args
@@ -106,16 +107,19 @@ def make_bandpass_filter(low_cutoff,high_cutoff,filter_order=10,fs=1000,filter_t
                                         window=filter_type,
                                         pass_zero='bandpass',
                                         fs=fs)
-    print 
+     
     # Calculate and plot frequency response
     frequency, frequency_response = signal.freqz(b=filter_coefficients, fs=fs)
 
+    # Convert to decibels
     # the formula is 20*np.log10()
     # https://www.mathworks.com/help/signal/ref/mag2db.html
     frequency_response_db = 20 * np.log10(np.abs(frequency_response))
 
     # Create figure and subplots
-    fig, axs = plt.subplots(2, 1, figsize=(10, 6))
+    fig, axs = plt.subplots(2, 1, figsize=(10, 6),
+                            num=f'{filter_type}_filter_{low_cutoff}-{high_cutoff}Hz_order{filter_order}',
+                            clear=True)
 
     # Plot impulse response
     filter_times = np.arange(0, len(filter_coefficients)) / fs
@@ -142,10 +146,10 @@ def make_bandpass_filter(low_cutoff,high_cutoff,filter_order=10,fs=1000,filter_t
     axs[1].set_yticks([y_value for y_value in range(min_rounded + 100, 1, 100)])
     axs[1].grid()
 
-    fig.suptitle(f"bandpass {filter_type} filter with fc=[{low_cutoff},{high_cutoff}], order={filter_order+1}")
+    fig.suptitle(f"bandpass {filter_type} filter with fc=[{low_cutoff},{high_cutoff}], order={filter_order}")
     
     plt.tight_layout()
-    plt.savefig(f'{filter_type}_filter_{low_cutoff}-{high_cutoff}Hz_order{filter_order + 1}.png')
+    plt.savefig(f'{filter_type}_filter_{low_cutoff}-{high_cutoff}Hz_order{filter_order}.png')
     plt.show()
 
     return filter_coefficients
@@ -154,24 +158,24 @@ def filter_data(data,b):
     """
     Descriptions
     --------------------------------
-    Apply filter both forwards and backwards using scipy.signal filtfilt
+    Apply FIR filter both forwards and backwards using scipy.signal filtfilt
     reference: https://mark-kramer.github.io/Case-Studies-Python/06.html
 
-    Channels = C, Time = T (in microsecond), filter order = O
+    Channels = C, Samples = T, filter order = O
 
     Args
     --------------------------------
     data, dict
-        the raw data dictionary
-    b, 1 X O 1D array
-        filter coefficients calculated by scipy.signal firwin
+        the raw data dictionary (with EEG data size C X T)
+    b, 1 X O+1 1D array of floats
+        filter coefficients for the raw data 
         
     Returns
     --------------------------------
-    filtered_data, C X T 2D numpy array
-        Filter-coefficients-b-applied data across the Channel
+    filtered_data, C X T 2D numpy array of floats
+        Filter-coefficients-b-applied data across each channel. Units of uV.
     """    
-    eeg = data['eeg']
+    eeg = data['eeg']*1e6 # data converted to uV
     filtered_data = np.array([signal.filtfilt(b=b,a=1,x=eeg[channel_index]) for channel_index in range(len(eeg))])
 
     return filtered_data
@@ -183,23 +187,23 @@ def get_envelope(data,filtered_data,ssvep_frequency=None,channel_to_plot=None):
     --------------------------------
     Calculate envelope using scipy.signal hilbert and plot one provided channels
 
-    Channels = C, Time = T (in microsecond)
+    Channels = C, Samples = T 
 
     Args
     --------------------------------
     data, dict
         the raw data dictionary
-    filtered_data, C X T 2D numpy array
-        Filter-coefficients-b-applied data across the Channel
+    filtered_data, C X T 2D numpy array of floats
+        Filter-coefficients-b-applied data across each channel. Units of uV.
     ssvep_frequency, int
-        the SSVEP frequency being isolated
+        the SSVEP frequency being isolated. The default is None.
     channel_to_plot, str
-        an optional string indicating which channel you’d like to plot
+        an optional string indicating which channel you’d like to plot. The default is None.
         
     Returns
     --------------------------------
-    envelope, C X T 2D numpy array
-        calculated envelope using scipy.signal hilbert
+    envelope, C X T 2D numpy array of floats
+        calculated envelope using scipy.signal hilbert for each channel. Units of uV.
     """    
 
     # extract data from dict
@@ -213,47 +217,53 @@ def get_envelope(data,filtered_data,ssvep_frequency=None,channel_to_plot=None):
     
     # Plot the envelope
     if channel_to_plot is not None:
-        if ssvep_frequency is not None:
-            channel_index = np.where(channels==channel_to_plot)[0] 
-
-            plt.figure(f'{channel_to_plot} envelope',clear=True, figsize=(10, 4))
-            plt.plot(time,1e6*filtered_data[channel_index].transpose(),label='Filtered Signal')
-            plt.plot(time,1e6*envelope[channel_index].transpose(),label='Envelope')
-            plt.title(f'{ssvep_frequency}Hz Bandpass Filtered Data')
-            plt.ylabel('voltage (uV)')
-            plt.xlabel('time (s)')
-            plt.grid()
-            plt.tight_layout()
-            plt.savefig(f'{channel_to_plot} envelope')
-            plt.show()
+        
+        # determine frequency being isolated (for plot title)
+        if ssvep_frequency is None:
+            ssvep_frequency='unknown '
+        
+        # find channel to plot
+        channel_index = np.where(channels==channel_to_plot)[0] 
+        
+        plt.figure(f'{channel_to_plot} envelope {ssvep_frequency}Hz',clear=True, figsize=(10, 4))
+        plt.plot(time,filtered_data[channel_index].transpose(),label='Filtered Signal')
+        plt.plot(time,envelope[channel_index].transpose(),label='Envelope')
+        plt.title(f'{ssvep_frequency}Hz Bandpass Filtered Data')
+        plt.ylabel('voltage (uV)')
+        plt.xlabel('time (s)')
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig(f'{channel_to_plot}_envelope_{ssvep_frequency}Hz.png')
+        plt.show()
         
     return envelope
 
 def plot_ssvep_amplitudes(data,envelope_a,envelope_b,ssvep_freq_a,ssvep_freq_b,
-                          subject,channel_to_plot=None):
+                          subject,channel_to_plot):
     """
     Descriptions
     --------------------------------
-    plot ssvep amplitudes and compare envelops of two groups
+    plot SSVEP amplitudes and compare envelops of two groups
 
-    Channels = C, Time = T (in microsecond)
+    Channels = C, Samples = T 
 
     Args
     --------------------------------
     data, dict
         the raw data dictionary
-    envelope_a, C X T 2D numpy array
-        the envelope of oscillations at the first SSVEP frequency
-    envelope_b, C X T 2D numpy array
-        the envelope of oscillations at the second SSVEP frequency
+    envelope_a, C X T 2D numpy array of float
+        the envelope of oscillations at the first SSVEP frequency. Units of uV.
+    envelope_b, C X T 2D numpy array of float
+        the envelope of oscillations at the second SSVEP frequency. Units of uV.
     ssvep_frequency_a, int
-        the SSVEP frequency being isolated in the first envelope
+        the SSVEP frequency (in Hz) being isolated in the first envelope
     ssvep_frequency_b, int
-        the SSVEP frequency being isolated in the second envelope
+        the SSVEP frequency (in Hz) being isolated in the second envelope
     subject, int
         the subject number
     channel_to_plot, str
-        an optional string indicating which channel you’d like to plot
+         string indicating which channel you’d like to plot
     """    
     
     # Convert event times to seconds
@@ -263,7 +273,9 @@ def plot_ssvep_amplitudes(data,envelope_a,envelope_b,ssvep_freq_a,ssvep_freq_b,
     channel_index = np.where(data['channels'] == channel_to_plot)[0][0]
 
     # Create figure and subplots
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 6))
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 6), 
+                                   num=f'{channel_to_plot} amplitudes subject{subject}', 
+                                   clear=True)
 
     # Top subplot: Event start and end times/types for 12Hz and 15Hz
     for start_sec, end_sec, event_type in zip(event_start_times_sec, event_end_times_sec, data['event_types']):
@@ -275,16 +287,15 @@ def plot_ssvep_amplitudes(data,envelope_a,envelope_b,ssvep_freq_a,ssvep_freq_b,
     ax1.set_yticks([12, 15])
     ax1.set_yticklabels(['12Hz', '15Hz'])
     ax1.set_xlabel('Time (s)')
-    ax1.set_xlabel('Flash Frequency')
-    ax1.set_title(f"Subject {subject} SSVEP Amplitudes")
+    ax1.set_ylabel('Flash Frequency')
+    ax1.set_title(f"{channel_to_plot} Subject {subject} SSVEP Event Data for Amplitude Comparison")
     ax1.grid(True, linestyle='--', alpha=0.7)
 
-    # Bottom subplot: envelop data
-    time_axis = np.arange(0, len(envelope_a[channel_index][:int(event_end_times_sec[-1] * data['fs'])])) / data['fs']
-
-    # convert volts to micro-volts
-    ax2.plot(time_axis, envelope_a[channel_index][:int(event_end_times_sec[-1] * data['fs'])] * 1e6, label=f"{ssvep_freq_a}Hz Envelope")
-    ax2.plot(time_axis, envelope_b[channel_index][:int(event_end_times_sec[-1] * data['fs'])] * 1e6, label=f"{ssvep_freq_b}Hz Envelope")
+    # Bottom subplot: envelope data
+    time_axis = np.arange(0,len(envelope_a[channel_index]))/data['fs']
+    
+    ax2.plot(time_axis, envelope_a[channel_index], label=f"{ssvep_freq_a}Hz Envelope")
+    ax2.plot(time_axis, envelope_b[channel_index], label=f"{ssvep_freq_b}Hz Envelope")
 
     ax2.set_xlabel('Time (s)')
     ax2.set_ylabel('Voltage (uV)')
@@ -292,32 +303,31 @@ def plot_ssvep_amplitudes(data,envelope_a,envelope_b,ssvep_freq_a,ssvep_freq_b,
     ax2.legend()
     ax2.grid(True, linestyle='--', alpha=0.7)
     ax2.set_yticks([0 ,5, 10 ,15])
-
-    fig.suptitle(f'SSVEP subject  {subject} Raw Data', fontsize=16)
-    fig.savefig(f'SSVEP_subject_{subject}_Raw_Data.png')
-    plt.xlim([220,260])
+    
     plt.tight_layout()
-
+    fig.savefig(f'SSVEP_subject{subject}_{channel_to_plot}_envelopes.png')
+    
     # Show the plot
     plt.show()
 
-def plot_filtered_spectra(data, filtered_data, envelope):
+def plot_filtered_spectra(data, filtered_data, envelope, channels = ["Fz", "Oz"]):
     """
     Descriptions
     --------------------------------
     plot filtered spectra and examine
 
-    Channels = C, Time = T (in microsecond)
+    Channels = C, Samples = T, Number of channels to be plotted = N
 
     Args
     --------------------------------
     data, dict
         the raw data dictionary
-    envelope, C X T 2D numpy array
-        calculated envelope using scipy.signal hilbert
-    filtered_data, C X T 2D numpy array
-        Filter-coefficients-b-applied data across the Channel
-
+    envelope, C X T 2D numpy array of floats
+        calculated envelope using scipy.signal hilbert for each channel. Units of uV.
+    filtered_data, C X T 2D numpy array of floats
+        Filter-coefficients-b-applied data across each channel
+    channels, 1 x N 1D array or list of str
+        a list/array of the names of the channels you want to plot (default is Fz and Oz)
     """    
    
     # Prepare the data for plotting
@@ -329,9 +339,9 @@ def plot_filtered_spectra(data, filtered_data, envelope):
     envelope_dict['eeg'] = envelope # add envelope data
     
     # Plot the spectra for raw, filtered, envelope
-    channels = data['channels'] # retrieve names of all channels
-    channels_to_plot = ['Fz','Oz'] # specify channels to plot
-    fig,axs=plt.subplots(2,3,sharex=True,sharey=True,num='spectra',clear=True) # set up figure
+    channels_from_data = data['channels'] # retrieve names of all channels
+    channels_to_plot = channels # specify channels to plot
+    fig,axs=plt.subplots(len(channels_to_plot),3,sharex=True,sharey=True,num='spectra',clear=True, figsize=(12, 3 * len(channels_to_plot))) # set up figure
     fig.suptitle('Spectra at 3 stages of analysis')
     fig.supxlabel('frequency (Hz)')
     fig.supylabel('power (dB)')
@@ -339,32 +349,38 @@ def plot_filtered_spectra(data, filtered_data, envelope):
     subplot_index = 0
     for channel in channels_to_plot:
         
-        channel_index = np.where(channels==channel)[0]
+        channel_index = np.where(channels_from_data==channel)[0]
         
         # raw data
         fft_frequencies, spectrum_db_12Hz, spectrum_db_15Hz = calculate_power_spectra(data_dict)
-        axs[subplot_index].plot(fft_frequencies,spectrum_db_15Hz[channel_index,:].transpose(),label='15Hz',color='r')
+        axs[subplot_index].plot(fft_frequencies,spectrum_db_15Hz[channel_index,:].transpose(),label='15Hz trials',color='r')
+        axs[subplot_index].plot(fft_frequencies,spectrum_db_12Hz[channel_index,:].transpose(),label='12Hz trials',color='g')
         axs[subplot_index].set_title(f'{channel} Raw')
+        axs[subplot_index].legend()
         axs[subplot_index].grid()
         subplot_index+=1 
         
         # filtered data
         fft_frequencies, spectrum_db_12Hz, spectrum_db_15Hz = calculate_power_spectra(filtered_dict)
-        axs[subplot_index].plot(fft_frequencies,spectrum_db_15Hz[channel_index,:].transpose(),label='15Hz',color='b')
+        axs[subplot_index].plot(fft_frequencies,spectrum_db_15Hz[channel_index,:].transpose(),label='15Hz trials',color='r')
+        axs[subplot_index].plot(fft_frequencies,spectrum_db_12Hz[channel_index,:].transpose(),label='12Hz trials',color='g')
         axs[subplot_index].set_title(f'{channel} Filtered')
+        axs[subplot_index].legend()
         axs[subplot_index].grid()
         subplot_index+=1 
         
         # envelope
         fft_frequencies, spectrum_db_12Hz, spectrum_db_15Hz = calculate_power_spectra(envelope_dict)
-        axs[subplot_index].plot(fft_frequencies,spectrum_db_15Hz[channel_index,:].transpose(),label='15Hz',color='orange')   
+        axs[subplot_index].plot(fft_frequencies,spectrum_db_15Hz[channel_index,:].transpose(),label='15Hz trials',color='r')   
+        axs[subplot_index].plot(fft_frequencies,spectrum_db_12Hz[channel_index,:].transpose(),label='12Hz trials',color='g')
         axs[subplot_index].set_title(f'{channel} Envelope')
+        axs[subplot_index].legend()
         axs[subplot_index].grid()
         subplot_index+=1 
     
     axs[subplot_index-1].set_xlim((0,80))  # zoom in to relevant frequencies 
     plt.tight_layout()   
-    plt.savefig("Spectra.png")
+    plt.savefig("Spectra_" + "_".join(channels_to_plot) + ".png")
     plt.show()
 
 
