@@ -28,8 +28,16 @@ event_frequency = np.array([event[:-2] for event in set(data['event_types'])], d
 
 predictions = predict_ssvep_data.generate_predictions(channel_eeg_epochs_fft, fft_frequencies, event_frequency)
 
-# get predictions
+# as predictions is 12 or 15 based on which amplitude is higher, convert it to bool
+predicted_labels = np.array(predictions == 15)
+
+# %%
+# Part 2
+accuracy, ITR_time = predict_ssvep_data.calculate_accuracy_and_ITR(is_trial_15Hz, predicted_labels)
+
+# %%
+print(accuracy)
+print(ITR_time)
+# %%
 print(predictions)
-
-
 # %%

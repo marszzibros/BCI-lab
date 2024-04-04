@@ -33,7 +33,7 @@ def generate_predictions(eeg_epochs_fft, fft_frequencies, event_frequency, thres
     amplitudes_2 = np.abs(eeg_epochs_fft[:, :, frequency_index_2])
 
     # Initialize array to store predicted labels
-    predicted_labels = np.empty(eeg_epochs_fft.shape[0], dtype=bool)
+    predicted_labels = np.empty(eeg_epochs_fft.shape[0], dtype=int)
 
     # Iterate over EEG epochs to predict labels based on amplitude difference
     for trial_index in range(0, eeg_epochs_fft.shape[0]):
@@ -45,5 +45,35 @@ def generate_predictions(eeg_epochs_fft, fft_frequencies, event_frequency, thres
         elif amplitude_difference <= threshold:
             predicted_labels[trial_index] = event_frequency[1]
 
-
     return predicted_labels
+
+def calculate_accuracy_and_ITR(true_labels, predicted_labels, epoch_start_time=0, epoch_end_time=20):
+    """
+    Calculate accuracy and Information Transfer Rate (ITR).
+
+    Parameters:
+    - true_labels (numpy.ndarray): Array of true labels.
+    - predicted_labels (numpy.ndarray): Array of predicted labels.
+    - epoch_start_time (float): Start time of epoch. Default is 0.
+    - epoch_end_time (float): End time of epoch. Default is 20.
+
+    Returns:
+    - accuracy (float): Accuracy of the predictions.
+    - ITR_time (float): Information Transfer Rate (ITR) in bits per second.
+    """
+    # Calculate accuracy
+    num_trials = true_labels.shape[0]
+    correct_labels = np.sum(true_labels == predicted_labels)
+    accuracy = correct_labels / num_trials
+
+    # Calculate ITR
+    N = 2
+    
+    if accuracy == 1:
+        ITR_trial = 1
+    else:
+        ITR_trial = np.log2(N) + accuracy * np.log2(accuracy) + (1 - accuracy) * np.log2((1 - accuracy) / (N - 1))
+
+    ITR_time = ITR_trial * (num_trials / (epoch_end_time - epoch_start_time))
+
+    return accuracy, ITR_time
