@@ -19,9 +19,8 @@ Created on Feb 24 2024
 @author: 
     Ardyn Olszko
     Yoonki Hong
+    Jay Hwasung Jung - modified
 """
-
-#%% Part 1: Load the Data
 
 # import packages
 
@@ -54,7 +53,6 @@ def load_ssvep_data(subject, data_directory):
 
     return data_dict
 
-#%% Part 2: Plot the Data
 
 # function to plot the raw data
 def plot_raw_data(data,subject,channels_to_plot):
@@ -126,9 +124,6 @@ def plot_raw_data(data,subject,channels_to_plot):
     
     return
 
-
-#%% Part 3: Extract the Epochs
-
 # function to epoch the data
 def epoch_ssvep_data(data_dict, epoch_start_time=0, epoch_end_time=20):
     '''
@@ -192,42 +187,37 @@ def epoch_ssvep_data(data_dict, epoch_start_time=0, epoch_end_time=20):
     
     return eeg_epochs, epoch_times, is_trial_15Hz
 
-#%% Part 4: Take the Fourier Transform
-
-# function to calculate frequency spectrum
 def get_frequency_spectrum(eeg_epochs, fs):
-    '''
-    Calcluate the FT each channel in each epoch.
+    """
+    Descriptions
+    --------------------------------
+    calculate fourier transform using rfft and rfftfreq
 
-    Parameters
-    ----------
-    eeg_epochs : array of float, size M x N x T where M is the number of trials,
-    N is the number of channels, and T is the number of samples in the epoch
-        EEG data after each epoch. Units in uV.
-    fs : int or float
-        Sampling frequency of the EEG data.
+    Trials/Events = E, Channels = C, Time = T, Frequency = F
+
+    Args
+    --------------------------------
+    eeg_epochs, E x C x T 3D numpy float array,
+        contains the EEG data after
+    fs, int
+        sampling frequency
 
     Returns
-    -------
-    eeg_epochs_fft : array of float, size M x N X F where M is the number of trials,
-    N is the number of channels, and F is number of frequencies measured in the epoch
-        FT frequency content of each channel in each epoch .
-    fft_frequencies : array of float, size F
-        Frequencies measured, where the maximum frequency measured is 1/2*fs.
+    --------------------------------
 
-    '''
+    eeg_epochs_fft, E x C x F 3D numpy float array
+        an array that is the same size as eeg_epochs, except the final dimension now represents frequency 
+        instead of time (i.e., size [trials, channels, frequencies]).
+    fft_frequencies, F x 1 1D numpy float array
+        an array (of length frequencies) that is the frequency corresponding to each
+        column in the FFT. That is, eeg_epochs_fft[:,:,i] is the energy at frequency fft_frequencies[i] Hz.
+
+    """
     
-    # calculate FT on each channel
-    eeg_epochs_fft = scipy.fft.rfft(eeg_epochs)
-    
-    # calculate frequencies
-    sample_count = eeg_epochs.shape[2]
-    total_duration = sample_count/fs
-    fft_frequencies = np.arange(0,eeg_epochs_fft.shape[2])/total_duration
-    
+    eeg_epochs_fft = np.fft.rfft(eeg_epochs - eeg_epochs.mean(), axis = 2)
+    fft_frequencies = np.fft.rfftfreq(eeg_epochs.shape[2], 1 / fs)
+
     return eeg_epochs_fft, fft_frequencies
-
-#%% Part 5: Plot the Power Spectra
 
 # function to plot the mean power spectra for specified channesl
 def plot_power_spectrum(eeg_epochs_fft, fft_frequencies, is_trial_15Hz, channels, channels_to_plot, subject):
