@@ -10,7 +10,7 @@ import numpy as np
 
 # initialize import parameters
 directory_path = "SsvepData/"
-subject = 2
+subject = 1
 
 # load ssvep data and prepare for the epochs
 data = import_ssvep_data.load_ssvep_data(subject, directory_path)
@@ -83,17 +83,15 @@ for start_time in range(0, 21):
         if ITR_array[start_time, end_time] == -1:
             ITR_array[start_time, end_time] = min_ITR
 
-predict_ssvep_data.plot_accuracy_and_ITR(accuracy_array=accuracy_array[0:19, 0:19], ITR_array=ITR_array[0:19,0:19])
+predict_ssvep_data.plot_accuracy_and_ITR(accuracy_array=accuracy_array, ITR_array=ITR_array)
+
 # %%
 # Part 5
-selected_condition = [0,16]
+condition = [7,19]
 
-eeg_epochs, epoch_times, is_trial_15Hz = import_ssvep_data.epoch_ssvep_data(data, epoch_start_time=selected_condition[0], epoch_end_time=selected_condition[1])
+eeg_epochs, epoch_times, is_trial_15Hz = import_ssvep_data.epoch_ssvep_data(data, epoch_start_time= condition[0], epoch_end_time=condition[1])
+
 eeg_epochs_fft, fft_frequencies = import_ssvep_data.get_frequency_spectrum(eeg_epochs, fs)
-
 channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:]
 
-predict_ssvep_data.plot_predictor_histogram(channel_eeg_epochs_fft, fft_frequencies, event_frequency)
-
-
-# %%
+predict_ssvep_data.plot_predictor_histogram(channel_eeg_epochs_fft, fft_frequencies, event_frequency=event_frequency)
