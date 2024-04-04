@@ -6,6 +6,8 @@
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def generate_predictions(eeg_epochs_fft, fft_frequencies, event_frequency, threshold=0):
     """
@@ -77,3 +79,26 @@ def calculate_accuracy_and_ITR(true_labels, predicted_labels, epoch_start_time=0
     ITR_time = ITR_trial * (num_trials / (epoch_end_time - epoch_start_time))
 
     return accuracy, ITR_time
+
+def plot_accuracy_and_ITR (accuracy_array, ITR_array):
+
+    accuracy_array = accuracy_array * 100
+
+    # Set up the figure and axes using Seaborn
+    fig, axs = plt.subplots(1, 2, figsize=(14, 6))
+
+    # Plot the first heatmap using Seaborn with 'viridis' colormap
+    sns.heatmap(accuracy_array, cmap='viridis', vmin=0, vmax=accuracy_array.max(), ax=axs[0], cbar=True, cbar_kws={'label': '% correct'})
+    axs[0].set_title('Accuracy')
+    axs[0].set_xlabel('Start Time (s)')
+    axs[0].set_ylabel('End Time (s)')
+    axs[0].invert_yaxis()
+
+    # Plot the second heatmap using Seaborn with 'viridis' colormap
+    sns.heatmap(ITR_array, cmap='viridis', vmin=0, vmax=ITR_array.max(), ax=axs[1], cbar=True, cbar_kws={'label': 'ITR (bits/sec)'})
+    axs[1].set_title('Information Transfer Rate')
+    axs[1].set_xlabel('Epoch Start Time (s)')
+    axs[1].set_ylabel('Epoch End Time (s)')
+    axs[1].invert_yaxis()
+    plt.tight_layout()
+    plt.show()
