@@ -20,6 +20,9 @@ or right
 4.) Generate predictor histogram for distribution of predictor values 
     a.) What threshold should be used for predictions?
 """
+import numpy as np
+import matplotlib.pyplot as plt
+import import_ssvep_data
 
 #%% Part A: Generate Predictions
 
@@ -38,9 +41,51 @@ Main function:
     outputs: predicted_labels
 """
 
+def generate_predictions(subject,data_directory,channel,start_time,end_time):
+    
+    # Load raw data
+    data = import_ssvep_data.load_ssvep_data(subject, data_directory)
+    fs = data['fs']
+    
+    # Load epochs
+    eeg_epochs, epoch_times, is_trial_15Hz = import_ssvep_data.epoch_ssvep_data(data,start_time,end_time)
+    
+    # Apply FFT to epochs
+    eeg_epochs_fft, fft_frequencies = import_ssvep_data.get_frequency_spectrum(eeg_epochs,fs)
+
+    # Limit data to channel
+    channel_data = np.where(data['channels'] == channel)[0]
+    
+    # Get epochs only from channel
+    channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_data,:]
+
+    # Sort frequency type
+    event_frequency = np.array([event[:-2] for event in set(data['event_types'])], dtype=int)
+
+    # Find elements of FFT representing amplitude of oscillations for 12Hz and 15Hz
+    index_12Hz = np.argmin(np.abs(fft_frequencies - event_frequency[0]))
+    index_15Hz = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
+
+    # Extract amplitudes for the two event frequencies
+    amplitudes_12Hz = np.abs(channel_eeg_epochs_fft[:, :, index_12Hz])
+    amplitudes_15Hz = np.abs(channel_eeg_epochs_fft[:, :, index_15Hz])
+    
+    # Create empty array for predicted labels
+    predicted_labels = np.empty(eeg_epochs_fft.shape[0], dtype=int)
+    
+    # Iterate over EEG epochs to predict labels based on amplitude difference
+    for i in range(0, channel_eeg_epochs_fft.shape[0]):
+        amplitude_difference = (amplitudes_12Hz[i][0] - amplitudes_15Hz[i][0])
+
+        # Predict label based on amplitude difference 
+        if amplitude_difference > 0:
+            predicted_labels[i] = event_frequency[0]
+        elif amplitude_difference <= 0:
+            predicted_labels[i] = event_frequency[1]
+    
+    return predicted_labels
+
 #%% Part B: Calculate Accuracy and ITR
-
-
 """
 Main function:
     inputs: truth_labels, predicted_labels, start_time, end_time
@@ -51,7 +96,9 @@ Main function:
     
     outputs: accuracy, ITR
 """
-
+def calculate_accuracy_ITR(truth_labels,predicted_labels,start_time,end_time):
+    
+    return accuracy, ITR
 
 #%% Part C: Loop Through Epoch Limits
 

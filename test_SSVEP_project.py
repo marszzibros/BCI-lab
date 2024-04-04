@@ -4,10 +4,16 @@ Created on Tue Apr  2 10:17:10 2024
 
 @author: tgsha
 """
+import SSVEP_project
+import numpy as np
 
+data_directory = './SsvepData/'
+subject = 2
+channel = "Oz"
+start_time = 0
+end_time = 20
 
 #%% Part A: Generate Predictions
-
 """
  - load data
  - extract epochs with custom start/end times
@@ -18,10 +24,9 @@ Main function:
 
     outputs: predicted_labels
 """
+predicted_labels = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
 
 #%% Part B: Calculate Accuracy and ITR
-
-
 """
 Main function:
     inputs: truth_labels, predicted_labels, start_time, end_time
