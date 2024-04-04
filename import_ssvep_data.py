@@ -124,67 +124,69 @@ def plot_raw_data(data,subject,channels_to_plot):
     
     return
 
-# function to epoch the data
-def epoch_ssvep_data(data_dict, epoch_start_time=0, epoch_end_time=20):
-    '''
-    Epoch the EEG data.
+def epoch_ssvep_data(data_dict, epoch_start_time = 0, epoch_end_time = 20):
+    """
+    Descriptions
+    --------------------------------
+    epoch ssvep data based on epoch_start_time and epoch_end_time
 
-    Parameters
-    ----------
-    data_dict : dict
-        Dictionary of data for a subject.
-    epoch_start_time : int or float, optional
-        Start time of the epoch relative the the event time. Units in seconds. The default is 0.
-    epoch_end_time : int or float, optional
-        End time of the epoch relative the the event time. Units in seconds. The default is 20.
+    Trials/Events = E, Channels = C, Time = T
+
+    Args
+    --------------------------------
+    data_dict, dict
+        the dictionary variable that stores ssvep data of given subject
+    epoch_start_time, float
+        the path to the folder where the data afiles sit on your computer
+    epoch_end_time, float
+        the path to the folder where the data afiles sit on your computer
 
     Returns
-    -------
-    eeg_epochs : array of float, size M x N x T where M is the number of trials,
-    N is the number of channels, and T is the number of samples in the epoch
-        EEG data after each epoch. Units in uV.
-    epoch_times : array of float, size T where T is the number of samples
-        Time (relative to the event) of each sample. Units in seconds.
-    is_trial_15Hz : array of bool, size M where M is the number of trials
-        Event label, where True is 15 Hz event and False is 12 Hz event.
+    --------------------------------
+    eeg_epochs, E x C x T 3D numpy float array,
+        contains the EEG data after
+    epoch_times, T x 1 1D numpy float array
+        the time in seconds (relative to the event) of each time point in eeg_epochs
+    is_trial_15Hz, E x 1 1D numpy bool array
+        an array in which is_trial_15Hz[i] is True if the light was flashing at 15Hz during trial/epoch i.
 
-    '''
-    
-    # extract relevant variables from dictionary
-    eeg_raw = data_dict['eeg'] # eeg data in Volts. Each row is a channel and each column is a sample. (not sure data are actually in Volts)
-    fs = data_dict['fs'] # sampling frequency in Hz.
-    event_samples = data_dict['event_samples'] # sample when each event occurred.
-    event_types = data_dict['event_types'] # frequency of flickering checkerboard for each event. 
+    """
+    # change units to micro volt
+    eeg_data = data_dict['eeg']
 
-    # convert eeg data to uV
-    eeg = 10e5*eeg_raw # multiply by 10e5 to convert to uV (confirmed that this matches the original dataset from mne)
-    
-    # define boolean for event types
-    is_trial_15Hz = event_types == '15hz'
-    
-    # create time array for each epoch
-    epoch_times = np.arange(epoch_start_time,epoch_end_time,1/fs)
-    
-    # define size of 3d array of epochs
-    epoch_count = len(event_samples) 
-    sample_count = len(epoch_times)
-    channel_count = eeg.shape[0]
-       
-    # calculate end samples for all epochs
-    start_samples = event_samples + int(epoch_start_time*fs)
-    end_samples = event_samples + int(epoch_end_time*fs)
-    
-    # adjust any start and end samples that occur outside the times of the available data
-    start_samples[start_samples<0] = 0
-    end_samples[end_samples>eeg.shape[1]]=eeg.shape[1]
-    
-    # define 3d array for epoch data
-    eeg_epochs = np.full((epoch_count,channel_count,sample_count),np.nan,dtype='float32')
-    
-    # fill in the epoch data
-    for epoch_index in np.arange(epoch_count):
-        eeg_epochs[epoch_index] = eeg[:, start_samples[epoch_index]:end_samples[epoch_index]]
-    
+    # Get events index
+    epoch_starts = np.array(data_dict['event_samples']) + epoch_start_time * data_dict['fs'] 
+    epoch_ends = epoch_starts + data_dict['fs'] * (epoch_end_time - epoch_start_time)
+
+    num_epochs = len(data_dict['event_samples'])
+    num_channels = eeg_data.shape[0]
+    num_time = int((epoch_end_time - epoch_start_time) * data_dict['fs'])
+
+    # Initialize the eeg_epochs array
+    eeg_epochs = np.zeros((num_epochs, num_channels, num_time))
+
+    for epoch_index, (epoch_start_index, epoch_end_index) in enumerate(zip(epoch_starts, epoch_ends)):
+        epoch_data = eeg_data[:, int(epoch_start_index):int(epoch_end_index)] 
+
+        # Check if the epoch_data does not fill the entire epoch length
+        if epoch_data.shape[1] < num_time:
+            # Fill the lacking part with zeros
+            epoch_data = np.pad(epoch_data, ((0, 0), (0, num_time - epoch_data.shape[1])), mode='constant')
+
+        eeg_epochs[epoch_index] = epoch_data * 1e+6
+
+    eeg_epochs = eeg_epochs.astype(np.float64)
+
+    # define epoch_times 
+
+    epoch_times = np.arange(epoch_start_time, 
+                            epoch_end_time,
+                            1 / data_dict['fs'])
+
+
+    # define is_trial_15Hz
+    is_trial_15Hz = np.array(data_dict['event_types'] == "15hz", dtype = bool)
+
     return eeg_epochs, epoch_times, is_trial_15Hz
 
 def get_frequency_spectrum(eeg_epochs, fs):

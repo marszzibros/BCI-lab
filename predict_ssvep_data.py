@@ -88,17 +88,38 @@ def plot_accuracy_and_ITR (accuracy_array, ITR_array):
     fig, axs = plt.subplots(1, 2, figsize=(14, 6))
 
     # Plot the first heatmap using Seaborn with 'viridis' colormap
-    sns.heatmap(accuracy_array, cmap='viridis', vmin=0, vmax=accuracy_array.max(), ax=axs[0], cbar=True, cbar_kws={'label': '% correct'})
+    sns.heatmap(accuracy_array, cmap='viridis', vmin=accuracy_array.min(), vmax=accuracy_array.max(), ax=axs[0], cbar=True, cbar_kws={'label': '% correct'})
     axs[0].set_title('Accuracy')
-    axs[0].set_xlabel('Start Time (s)')
-    axs[0].set_ylabel('End Time (s)')
+    axs[0].set_xlabel('Epoch End Time (s)')
+    axs[0].set_ylabel('Epoch Start Time (s)')
     axs[0].invert_yaxis()
 
     # Plot the second heatmap using Seaborn with 'viridis' colormap
-    sns.heatmap(ITR_array, cmap='viridis', vmin=0, vmax=ITR_array.max(), ax=axs[1], cbar=True, cbar_kws={'label': 'ITR (bits/sec)'})
+    sns.heatmap(ITR_array, cmap='viridis', vmin=ITR_array.min(), vmax=ITR_array.max(), ax=axs[1], cbar=True, cbar_kws={'label': 'ITR (bits/sec)'})
     axs[1].set_title('Information Transfer Rate')
-    axs[1].set_xlabel('Epoch Start Time (s)')
-    axs[1].set_ylabel('Epoch End Time (s)')
+    axs[1].set_xlabel('Epoch End Time (s)')
+    axs[1].set_ylabel('Epoch Start Time (s)')
     axs[1].invert_yaxis()
     plt.tight_layout()
+    plt.show()
+
+def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency):
+
+    # Find indices corresponding to event frequencies in the FFT frequencies array
+    # Find the one that is closest
+    frequency_index_1 = np.argmin(np.abs(fft_frequencies - event_frequency[0]))
+    frequency_index_2 = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
+
+    # Extract amplitudes for the two event frequencies
+    amplitudes_1 = np.abs(eeg_epochs_fft[:, :, frequency_index_1])
+    amplitudes_2 = np.abs(eeg_epochs_fft[:, :, frequency_index_2])
+
+    predictor_variable = np.array(amplitudes_1 - amplitudes_2)
+
+    # Plot predictor histogram
+    plt.hist(predictor_variable, bins=20)
+    plt.title('Predictor Histogram')
+    plt.xlabel('Predictor Variable')
+    plt.ylabel('Frequency')
+    plt.grid(True)
     plt.show()

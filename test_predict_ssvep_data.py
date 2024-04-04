@@ -45,7 +45,6 @@ accuracy, ITR_time = predict_ssvep_data.calculate_accuracy_and_ITR(is_trial_15Hz
 
 channel = 'Oz'
 channel_index = np.where(data['channels'] == channel)[0]
-channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:]
 event_frequency = np.array([event[:-2] for event in set(data['event_types'])], dtype=int)
 
 accuracy_array = np.ones((21,21), dtype=float) * -1
@@ -59,7 +58,9 @@ for start_time in range(0, 21):
         if start_time < end_time: 
             # get epochs and fft
             eeg_epochs, epoch_times, is_trial_15Hz = import_ssvep_data.epoch_ssvep_data(data, epoch_start_time=start_time, epoch_end_time=end_time)
+
             eeg_epochs_fft, fft_frequencies = import_ssvep_data.get_frequency_spectrum(eeg_epochs, fs)
+            channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:]
 
             predictions = predict_ssvep_data.generate_predictions(channel_eeg_epochs_fft, fft_frequencies, event_frequency)
 
@@ -73,7 +74,7 @@ for start_time in range(0, 21):
                 min_ITR = ITR_time
             
             accuracy_array[start_time, end_time] = accuracy
-            ITR_array[start_time, end_time] = accuracy
+            ITR_array[start_time, end_time] = ITR_time
 
 for start_time in range(0, 21):
     for end_time in range(0, 21):
@@ -82,5 +83,17 @@ for start_time in range(0, 21):
         if ITR_array[start_time, end_time] == -1:
             ITR_array[start_time, end_time] = min_ITR
 
-predict_ssvep_data.plot_accuracy_and_ITR(accuracy_array=accuracy_array, ITR_array=ITR_array)
+predict_ssvep_data.plot_accuracy_and_ITR(accuracy_array=accuracy_array[0:19, 0:19], ITR_array=ITR_array[0:19,0:19])
+# %%
+# Part 5
+selected_condition = [0,16]
+
+eeg_epochs, epoch_times, is_trial_15Hz = import_ssvep_data.epoch_ssvep_data(data, epoch_start_time=selected_condition[0], epoch_end_time=selected_condition[1])
+eeg_epochs_fft, fft_frequencies = import_ssvep_data.get_frequency_spectrum(eeg_epochs, fs)
+
+channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:]
+
+predict_ssvep_data.plot_predictor_histogram(channel_eeg_epochs_fft, fft_frequencies, event_frequency)
+
+
 # %%
