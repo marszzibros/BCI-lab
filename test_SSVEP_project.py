@@ -13,18 +13,16 @@ channel = "Oz"
 start_time = 0
 end_time = 20
 
+
 #%% Part A: Generate Predictions
 """
- - load data
- - extract epochs with custom start/end times
- - take FFT for each epoch
 
 Main function: 
     inputs: data, channel, start_time, end_time, trial_num, frequencies=('12Hz','15Hz' - closest?)
 
     outputs: predicted_labels
 """
-predicted_labels = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
+predicted_labels, true_labels = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
 
 #%% Part B: Calculate Accuracy and ITR
 """
@@ -34,6 +32,7 @@ Main function:
     outputs: accuracy, ITR
 """
 
+accuracy, ITR_time = SSVEP_project.calculate_accuracy_and_ITR(true_labels,predicted_labels,start_time,end_time)
 
 #%% Part C: Loop Through Epoch Limits
 
@@ -43,6 +42,8 @@ Main function:
     
     outputs: validated_epochs
 """
+
+SSVEP_project.plot_accuracy_and_ITR(accuracy, ITR_time, subject, data_directory, channel)
 
 
 #%% Part D: Plot Results
