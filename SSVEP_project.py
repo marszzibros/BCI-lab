@@ -68,19 +68,19 @@ def generate_predictions(subject,data_directory,channel,start_time,end_time):
     event_frequency = np.array([event[:-2] for event in set(data['event_types'])], dtype=int)    
 
     # Find elements of FFT representing amplitude of oscillations for 12Hz and 15Hz
-    index_12Hz = np.argmin(np.abs(fft_frequencies - event_frequency[0]))
-    index_15Hz = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
+    index_15Hz = np.argmin(np.abs(fft_frequencies - event_frequency[0]))
+    index_12Hz = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
 
     # Extract amplitudes for the two event frequencies
-    amplitudes_12Hz = np.abs(channel_eeg_epochs_fft[:, :, index_12Hz])
     amplitudes_15Hz = np.abs(channel_eeg_epochs_fft[:, :, index_15Hz])
+    amplitudes_12Hz = np.abs(channel_eeg_epochs_fft[:, :, index_12Hz])
     
     # Create empty array for predictions
     predictions = np.empty(eeg_epochs_fft.shape[0], dtype=int)
     
     # Iterate over EEG epochs to predict labels based on amplitude difference
     for i in range(0, channel_eeg_epochs_fft.shape[0]):
-        amplitude_difference = (amplitudes_12Hz[i][0] - amplitudes_15Hz[i][0])
+        amplitude_difference = (amplitudes_15Hz[i][0] - amplitudes_12Hz[i][0])
 
         # Predict label based on amplitude difference 
         if amplitude_difference > 0:
@@ -91,7 +91,7 @@ def generate_predictions(subject,data_directory,channel,start_time,end_time):
     # as predictions is 12 or 15 based on which amplitude is higher, convert it to bool
     predicted_labels = np.array(predictions == 15)
     
-    return predicted_labels, true_labels, fft_frequencies, event_frequency, eeg_epochs_fft
+    return predicted_labels, true_labels, fft_frequencies, event_frequency, eeg_epochs_fft, fs
 
 #%% Part B: Calculate Accuracy and ITR
 """
@@ -104,7 +104,7 @@ Main function:
     
     outputs: accuracy, ITR
 """
-def calculate_accuracy_and_ITR(true_labels,predicted_labels,start_time,end_time):
+def calculate_accuracy_and_ITR(true_labels,predicted_labels,start_time,end_time,fs):
 
     """
     Calculate accuracy and Information Transfer Rate (ITR).
@@ -132,7 +132,7 @@ def calculate_accuracy_and_ITR(true_labels,predicted_labels,start_time,end_time)
     else:
         ITR_trial = np.log2(N) + accuracy * np.log2(accuracy) + (1 - accuracy) * np.log2((1 - accuracy) / (N - 1))
 
-    ITR_time = ITR_trial * (num_trials / (end_time - start_time))
+    ITR_time = ITR_trial * (num_trials*1000 / (end_time - start_time))
 
     return accuracy, ITR_time
 
@@ -165,16 +165,16 @@ def plot_accuracy_and_ITR(accuracy, ITR_time, subject, data_directory, channel):
     ITR_array = np.ones((21,21), dtype=float) * -1
     
     min_accuracy = 1
-    min_ITR = 100
+    min_ITR = 1
     
     for start_time in range(0, 21):
         for end_time in range(0, 21):
             if start_time < end_time: 
 
                 # generate predictions
-                predicted_labels, true_labels, *rest = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
+                predicted_labels, true_labels, fs, *rest = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
     
-                accuracy, ITR_time = SSVEP_project.calculate_accuracy_and_ITR(true_labels, predicted_labels,start_time,end_time)
+                accuracy, ITR_time = SSVEP_project.calculate_accuracy_and_ITR(true_labels, predicted_labels,start_time,end_time,fs)
     
                 if min_accuracy > accuracy:
                     min_accuracy = accuracy
@@ -227,40 +227,33 @@ Main function:
 
 def plot_predictor_histogram(start_time, end_time, subject, data_directory, channel):
 
-    # Load raw data
-    data = import_ssvep_data.load_ssvep_data(subject, data_directory)
-    fs = data['fs']
-    
-    # Load epochs
-    eeg_epochs, epoch_times, *rest = import_ssvep_data.epoch_ssvep_data(data,start_time,end_time)
-        
-    # Apply FFT to epochs
-    eeg_epochs_fft, fft_frequencies = import_ssvep_data.get_frequency_spectrum(eeg_epochs,fs)
+    data = import_ssvep_data.load_ssvep_data(subject, data_directory)    
 
-    # Limit data to channel
-    channel_data = np.where(data['channels'] == channel)[0]
-    
-    # Get epochs only from channel
-    channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_data,:]
-    
-    # Sort frequency type
-    event_frequency = np.array([event[:-2] for event in set(data['event_types'])], dtype=int)    
+    predicted_labels, true_labels, fft_frequencies, event_frequency, eeg_epochs_fft, \
+        *rest = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
 
-    # Find elements of FFT representing amplitude of oscillations for 12Hz and 15Hz
-    index_12Hz = np.argmin(np.abs(fft_frequencies - event_frequency[0]))
-    index_15Hz = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
-
+    # Find indices corresponding to event frequencies in the FFT frequencies array
+    # Find the one that is closest
+    frequency_index_1 = np.argmin(np.abs(fft_frequencies - event_frequency[0]))
+    frequency_index_2 = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
+    
+    channel_index = np.where(data['channels'] == channel)[0]
+    
+    channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:].squeeze()
+    
     # Extract amplitudes for the two event frequencies
-    amplitudes_12Hz = np.abs(channel_eeg_epochs_fft[:, :, index_12Hz])
-    amplitudes_15Hz = np.abs(channel_eeg_epochs_fft[:, :, index_15Hz])
+    present_amplitudes = channel_eeg_epochs_fft[true_labels, frequency_index_1] - channel_eeg_epochs_fft[true_labels, frequency_index_2]
+    absent_amplitudes = channel_eeg_epochs_fft[~true_labels, frequency_index_1] - channel_eeg_epochs_fft[~true_labels, frequency_index_2]
+
     
-    fig = plt.figure(figsize=(14, 6))
+    # Plot KDE graph
+    sns.kdeplot(np.real(present_amplitudes), color='skyblue', label='Present', fill=True)
+    sns.kdeplot(np.real(absent_amplitudes), color='orange', label='Absent', fill=True)
     
-    # Plot predictor line
-    plt.plot(amplitudes_12Hz, color='skyblue')
-    plt.plot(amplitudes_15Hz, color='orange')
-    plt.title('Predictor Histogram')
+    plt.title(f'Kernel Density Estimate (KDE) of Predictor Variable in channel {channel}')
     plt.xlabel('Predictor Variable')
-    plt.ylabel('Frequency')
+    plt.ylabel('Density')
+    plt.legend()
     plt.grid(True)
+    
     plt.show()

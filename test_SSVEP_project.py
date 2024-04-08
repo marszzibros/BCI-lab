@@ -22,8 +22,8 @@ Main function:
     
     outputs: predicted_labels
 """
-predicted_labels, true_labels, fft_frequencies, event_frequency, eeg_epochs_fft \
-    = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
+predicted_labels, true_labels, fft_frequencies, event_frequency, eeg_epochs_fft, \
+    fs = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
 
 #%% Part B: Calculate Accuracy and ITR
 """
@@ -33,14 +33,13 @@ Main function:
     outputs: accuracy, ITR
 """
 
-accuracy, ITR_time = SSVEP_project.calculate_accuracy_and_ITR(true_labels,predicted_labels,start_time,end_time)
+accuracy, ITR_time = SSVEP_project.calculate_accuracy_and_ITR(true_labels,predicted_labels,start_time,end_time, fs)
 
 #%% Part C/D: Loop Through Epoch Limits and Plot Results
 
 """
 Main function:
     inputs: data, channel, trial_num, frequencies, epoch_times 
-    
     outputs: validated_epochs
 """
 
