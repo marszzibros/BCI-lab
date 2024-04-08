@@ -121,7 +121,7 @@ def plot_accuracy_and_ITR(accuracy_array, ITR_array, channel, subject, x_axis=np
     plt.tight_layout()
     plt.savefig(f"subject{subject}/{channel}_{subject}_heatmap.png")
 
-def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,true_label, channel):
+def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,true_label, channel,subject, condition):
     """
     Plot histogram of predictor variable calculated from EEG epochs FFT.
 
@@ -131,6 +131,8 @@ def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,tr
     - event_frequency (tuple): Tuple containing two event frequencies of interest.
     - true_label (bool): True if the event is present in the epoch, False otherwise.
     - channel (str): channel to plot
+    - subject (int): subject number
+    - condition (array): containing start time and end time of epoch
 
     Returns:
     - None
@@ -149,9 +151,11 @@ def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,tr
     sns.kdeplot(present_amplitudes, color='skyblue', label='Present', fill=True)
     sns.kdeplot(absent_amplitudes, color='orange', label='Absent', fill=True)
 
-    plt.title(f'Kernel Density Estimate (KDE) of Predictor Variable in channel {channel}')
+    plt.title(f'KDE of Predictor Variable for SSVEP subject {subject} {channel} epoch time: [{condition[0]}, {condition[1]}]')
     plt.xlabel('Predictor Variable')
     plt.ylabel('Density')
+
+    plt.vlines(200, 0, 0.0008, colors='r', linestyles='dashed')
     plt.legend()
     plt.grid(True)
 
