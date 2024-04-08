@@ -245,6 +245,7 @@ def plot_predictor_histogram(start_time, end_time, subject, data_directory, chan
     present_amplitudes = channel_eeg_epochs_fft[true_labels, frequency_index_1] - channel_eeg_epochs_fft[true_labels, frequency_index_2]
     absent_amplitudes = channel_eeg_epochs_fft[~true_labels, frequency_index_1] - channel_eeg_epochs_fft[~true_labels, frequency_index_2]
 
+    plt.figure()
     
     # Plot KDE graph
     sns.kdeplot(np.real(present_amplitudes), color='skyblue', label='Present', fill=True)
