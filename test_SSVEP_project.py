@@ -8,8 +8,8 @@ import SSVEP_project
 import numpy as np
 
 data_directory = './SsvepData/'
-subject = 2
-channel = "Oz"
+subject = 1
+channel = "O2"
 start_time = 0
 end_time = 20
 
@@ -19,10 +19,11 @@ end_time = 20
 
 Main function: 
     inputs: data, channel, start_time, end_time, trial_num, frequencies=('12Hz','15Hz' - closest?)
-
+    
     outputs: predicted_labels
 """
-predicted_labels, true_labels = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
+predicted_labels, true_labels, fft_frequencies, event_frequency, eeg_epochs_fft \
+    = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
 
 #%% Part B: Calculate Accuracy and ITR
 """
@@ -34,7 +35,7 @@ Main function:
 
 accuracy, ITR_time = SSVEP_project.calculate_accuracy_and_ITR(true_labels,predicted_labels,start_time,end_time)
 
-#%% Part C: Loop Through Epoch Limits
+#%% Part C/D: Loop Through Epoch Limits and Plot Results
 
 """
 Main function:
@@ -45,16 +46,6 @@ Main function:
 
 SSVEP_project.plot_accuracy_and_ITR(accuracy, ITR_time, subject, data_directory, channel)
 
-
-#%% Part D: Plot Results
-
-"""
-Main function:
-    inputs: validated_epochs, channel, start_time, end_time
-    
-    outputs: None (creates plots)
-"""
-
 #%% Part E: Create a Predictor Histogram
 """
 Main function:
@@ -62,6 +53,7 @@ Main function:
     
     outputs: None (creates plots)
 """
+SSVEP_project.plot_predictor_histogram(start_time, end_time, subject, data_directory, channel)
 
 
 #%% Part F: Write-up
