@@ -24,6 +24,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import import_ssvep_data
 import seaborn as sns
+import SSVEP_project
+
 
 #%% Part A: Generate Predictions
 
@@ -89,7 +91,7 @@ def generate_predictions(subject,data_directory,channel,start_time,end_time):
     # as predictions is 12 or 15 based on which amplitude is higher, convert it to bool
     predicted_labels = np.array(predictions == 15)
     
-    return predicted_labels, true_labels
+    return predicted_labels, true_labels, fft_frequencies, event_frequency, eeg_epochs_fft
 
 #%% Part B: Calculate Accuracy and ITR
 """
@@ -158,9 +160,7 @@ def plot_accuracy_and_ITR(accuracy, ITR_time, subject, data_directory, channel):
     Returns:
     - None
     """
-    
-    import SSVEP_project
-    
+        
     accuracy_array = np.ones((21,21), dtype=float) * -1
     ITR_array = np.ones((21,21), dtype=float) * -1
     
@@ -172,7 +172,7 @@ def plot_accuracy_and_ITR(accuracy, ITR_time, subject, data_directory, channel):
             if start_time < end_time: 
 
                 # generate predictions
-                predicted_labels, true_labels = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
+                predicted_labels, true_labels, *rest = SSVEP_project.generate_predictions(subject,data_directory,channel,start_time,end_time)
     
                 accuracy, ITR_time = SSVEP_project.calculate_accuracy_and_ITR(true_labels, predicted_labels,start_time,end_time)
     
@@ -214,17 +214,6 @@ def plot_accuracy_and_ITR(accuracy, ITR_time, subject, data_directory, channel):
     plt.tight_layout()
     plt.show()
 
-#%% Part D: Plot Results
-
-"""
-Main function:
-    inputs: validated_epochs, channel, start_time, end_time
-    
-    plot pseudocolor plot (both subjects)
-    
-    outputs: None (creates plots)
-"""
-
 #%% Part E: Create a Predictor Histogram
 """
 Main function:
@@ -235,3 +224,43 @@ Main function:
     
     outputs: None (creates plots)
 """
+
+def plot_predictor_histogram(start_time, end_time, subject, data_directory, channel):
+
+    # Load raw data
+    data = import_ssvep_data.load_ssvep_data(subject, data_directory)
+    fs = data['fs']
+    
+    # Load epochs
+    eeg_epochs, epoch_times, *rest = import_ssvep_data.epoch_ssvep_data(data,start_time,end_time)
+        
+    # Apply FFT to epochs
+    eeg_epochs_fft, fft_frequencies = import_ssvep_data.get_frequency_spectrum(eeg_epochs,fs)
+
+    # Limit data to channel
+    channel_data = np.where(data['channels'] == channel)[0]
+    
+    # Get epochs only from channel
+    channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_data,:]
+    
+    # Sort frequency type
+    event_frequency = np.array([event[:-2] for event in set(data['event_types'])], dtype=int)    
+
+    # Find elements of FFT representing amplitude of oscillations for 12Hz and 15Hz
+    index_12Hz = np.argmin(np.abs(fft_frequencies - event_frequency[0]))
+    index_15Hz = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
+
+    # Extract amplitudes for the two event frequencies
+    amplitudes_12Hz = np.abs(channel_eeg_epochs_fft[:, :, index_12Hz])
+    amplitudes_15Hz = np.abs(channel_eeg_epochs_fft[:, :, index_15Hz])
+    
+    fig = plt.figure(figsize=(14, 6))
+    
+    # Plot predictor line
+    plt.plot(amplitudes_12Hz, color='skyblue')
+    plt.plot(amplitudes_15Hz, color='orange')
+    plt.title('Predictor Histogram')
+    plt.xlabel('Predictor Variable')
+    plt.ylabel('Frequency')
+    plt.grid(True)
+    plt.show()
