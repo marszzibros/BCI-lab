@@ -56,8 +56,8 @@ def calculate_accuracy_and_ITR(true_labels, predicted_labels, trials, duration):
     Parameters:
     - true_labels (numpy.ndarray): Array of true labels.
     - predicted_labels (numpy.ndarray): Array of predicted labels.
-    - epoch_start_time (float): Start time of epoch. Default is 0.
-    - epoch_end_time (float): End time of epoch. Default is 20.
+    - trials (int): Total number of trials.
+    - duration (float): Total duration in seconds.
 
     Returns:
     - accuracy (float): Accuracy of the predictions.
@@ -76,18 +76,23 @@ def calculate_accuracy_and_ITR(true_labels, predicted_labels, trials, duration):
     else:
         ITR_trial = np.log2(N) + accuracy * np.log2(accuracy) + (1 - accuracy) * np.log2((1 - accuracy) / (N - 1))
 
-    ITR_time = ITR_trial * (trials / duration)
+    tps = trials / (duration)
+    ITR_time = ITR_trial * tps
 
 
     return accuracy, ITR_time
 
-def plot_accuracy_and_ITR(accuracy_array, ITR_array, channel, subject):
+def plot_accuracy_and_ITR(accuracy_array, ITR_array, channel, subject, x_axis=np.arange(21), y_axis=np.arange(21)):
     """
     Plot accuracy and Information Transfer Rate (ITR) heatmaps.
 
     Parameters:
     - accuracy_array (numpy.ndarray): Array containing accuracy values.
     - ITR_array (numpy.ndarray): Array containing ITR values.
+    - channel (int): Channel number.
+    - subject (int): Subject number.
+    - x_axis (numpy.ndarray, optional): Custom x-axis values. Defaults to np.arange(21).
+    - y_axis (numpy.ndarray, optional): Custom y-axis values. Defaults to np.arange(21).
 
     Returns:
     - None
@@ -99,7 +104,7 @@ def plot_accuracy_and_ITR(accuracy_array, ITR_array, channel, subject):
 
     # Plot the first heatmap using Seaborn with 'viridis' colormap
     sns.heatmap(accuracy_array, cmap='viridis', vmin=accuracy_array.min(), vmax=accuracy_array.max(),
-                ax=axs[0], cbar=True, cbar_kws={'label': '% correct'})
+                ax=axs[0], cbar=True, cbar_kws={'label': '% correct'}, xticklabels=x_axis, yticklabels=y_axis)
     axs[0].set_title('Accuracy')
     axs[0].set_xlabel('Epoch End Time (s)')
     axs[0].set_ylabel('Epoch Start Time (s)')
@@ -107,16 +112,16 @@ def plot_accuracy_and_ITR(accuracy_array, ITR_array, channel, subject):
 
     # Plot the second heatmap using Seaborn with 'viridis' colormap
     sns.heatmap(ITR_array, cmap='viridis', vmin=ITR_array.min(), vmax=ITR_array.max(),
-                ax=axs[1], cbar=True, cbar_kws={'label': 'ITR (bits/sec)'})
+                ax=axs[1], cbar=True, cbar_kws={'label': 'ITR (bits/sec)'}, xticklabels=x_axis, yticklabels=y_axis)
     axs[1].set_title('Information Transfer Rate')
     axs[1].set_xlabel('Epoch End Time (s)')
     axs[1].set_ylabel('Epoch Start Time (s)')
     axs[1].invert_yaxis()
-    fig.suptitle(f"{channel}_{subject}_heatmap", fontsize="x-large")
+    fig.suptitle(f"SSVEP Subject {subject}, Channel {channel}", fontsize="x-large")
     plt.tight_layout()
-    plt.savefig(f"{channel}_{subject}_heatmap.png")
+    plt.savefig(f"subject{subject}/{channel}_{subject}_heatmap.png")
 
-def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,true_label):
+def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,true_label, channel):
     """
     Plot histogram of predictor variable calculated from EEG epochs FFT.
 
@@ -125,6 +130,7 @@ def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,tr
     - fft_frequencies (numpy.ndarray): Frequencies corresponding to FFT, shape (num_frequencies,).
     - event_frequency (tuple): Tuple containing two event frequencies of interest.
     - true_label (bool): True if the event is present in the epoch, False otherwise.
+    - channel (str): channel to plot
 
     Returns:
     - None
@@ -143,7 +149,7 @@ def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,tr
     sns.kdeplot(present_amplitudes, color='skyblue', label='Present', fill=True)
     sns.kdeplot(absent_amplitudes, color='orange', label='Absent', fill=True)
 
-    plt.title('Kernel Density Estimate (KDE) of Predictor Variable')
+    plt.title(f'Kernel Density Estimate (KDE) of Predictor Variable in channel {channel}')
     plt.xlabel('Predictor Variable')
     plt.ylabel('Density')
     plt.legend()

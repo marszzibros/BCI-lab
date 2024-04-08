@@ -38,7 +38,7 @@ predicted_labels = np.array(predictions == 15)
 # Part 2
 start_time = 0
 end_time = 20
-accuracy, ITR_time = predict_ssvep_data.calculate_accuracy_and_ITR(is_trial_15Hz, predicted_labels, eeg_epochs_fft.shape[2], duration = end_time-start_time)
+accuracy, ITR_time = predict_ssvep_data.calculate_accuracy_and_ITR(is_trial_15Hz, predicted_labels, eeg_epochs_fft.shape[1], duration=(end_time-start_time) * fs * (1/10))
 
 # %%
 # Part 3 & 4 
@@ -47,19 +47,22 @@ accuracy, ITR_time = predict_ssvep_data.calculate_accuracy_and_ITR(is_trial_15Hz
 # we will use Oz electrode
 
 # initialize predict parameters
-channel = 'O2'
+channel = 'Oz'
 channel_index = np.where(data['channels'] == channel)[0]
 channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:].squeeze()
 event_frequency = np.array([event[:-2] for event in set(data['event_types'])], dtype=int)
 event_frequency= np.sort(event_frequency)[::-1]
+
 
 accuracy_array = np.ones((21,21), dtype=float) * -1
 ITR_array = np.ones((21,21), dtype=float) * -1
 
 min_accuracy = 1
 min_ITR = 100
-for start_time in range(0, 21):
-    for end_time in range(0, 21):
+start_time_array = np.linspace(start=10, stop=20, num=21)
+end_time_array = np.linspace(start=10, stop=20, num=21)
+for start_index, start_time in enumerate(start_time_array):
+    for end_index, end_time in enumerate(end_time_array):
         if start_time < end_time:
 
             # get epochs and fft
@@ -79,8 +82,8 @@ for start_time in range(0, 21):
             if min_ITR > ITR_time:
                 min_ITR = ITR_time
             
-            accuracy_array[start_time, end_time] = accuracy
-            ITR_array[start_time, end_time] = ITR_time
+            accuracy_array[start_index, end_index] = accuracy
+            ITR_array[start_index, end_index] = ITR_time
 
 for start_time in range(0, 21):
     for end_time in range(0, 21):
@@ -89,14 +92,14 @@ for start_time in range(0, 21):
         if ITR_array[start_time, end_time] == -1:
             ITR_array[start_time, end_time] = min_ITR
 
-predict_ssvep_data.plot_accuracy_and_ITR(accuracy_array=accuracy_array, ITR_array=ITR_array, channel=channel, subject=subject)
+predict_ssvep_data.plot_accuracy_and_ITR(accuracy_array=accuracy_array, ITR_array=ITR_array, channel=channel, subject=subject, x_axis=end_time_array, y_axis=start_time_array)
 
 # %%
 # Part 5
-condition = [12,13]
+condition = [12,12.5]
 
 # initialize predict parameters
-channel = 'O2'
+channel = 'Oz'
 channel_index = np.where(data['channels'] == channel)[0]
 channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:].squeeze()
 event_frequency = np.array([event[:-2] for event in set(data['event_types'])], dtype=int)
@@ -107,7 +110,7 @@ eeg_epochs, epoch_times, is_trial_15Hz = import_ssvep_data.epoch_ssvep_data(data
 eeg_epochs_fft, fft_frequencies = import_ssvep_data.get_frequency_spectrum(eeg_epochs, fs)
 channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:].squeeze()
 
-predict_ssvep_data.plot_predictor_histogram(eeg_epochs_fft=channel_eeg_epochs_fft, fft_frequencies=fft_frequencies, event_frequency=event_frequency,true_label=is_trial_15Hz)
+predict_ssvep_data.plot_predictor_histogram(eeg_epochs_fft=channel_eeg_epochs_fft, fft_frequencies=fft_frequencies, event_frequency=event_frequency,true_label=is_trial_15Hz, channel=channel)
 
 
 # %%
