@@ -132,7 +132,13 @@ def calculate_accuracy_and_ITR(true_labels,predicted_labels,start_time,end_time,
     else:
         ITR_trial = np.log2(N) + accuracy * np.log2(accuracy) + (1 - accuracy) * np.log2((1 - accuracy) / (N - 1))
 
-    ITR_time = ITR_trial * (num_trials*1000 / (end_time - start_time))
+
+#    duration=(end_time-start_time) * fs * (1/10)
+#    tps = num_trials / (duration)
+#    ITR_time = ITR_trial * tps
+
+
+    ITR_time = ITR_trial * (num_trials / ((end_time-start_time) * 100))
 
     return accuracy, ITR_time
 
@@ -246,7 +252,7 @@ def plot_predictor_histogram(start_time, end_time, subject, data_directory, chan
     absent_amplitudes = channel_eeg_epochs_fft[~true_labels, frequency_index_1] - channel_eeg_epochs_fft[~true_labels, frequency_index_2]
 
     plt.figure()
-    
+
     # Plot KDE graph
     sns.kdeplot(np.real(present_amplitudes), color='skyblue', label='Present', fill=True)
     sns.kdeplot(np.real(absent_amplitudes), color='orange', label='Absent', fill=True)
