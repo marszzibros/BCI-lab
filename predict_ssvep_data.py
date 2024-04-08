@@ -49,7 +49,7 @@ def generate_predictions(eeg_epochs_fft, fft_frequencies, event_frequency, thres
 
     return predicted_labels
 
-def calculate_accuracy_and_ITR(true_labels, predicted_labels, epoch_start_time=0, epoch_end_time=20):
+def calculate_accuracy_and_ITR(true_labels, predicted_labels, trials, duration):
     """
     Calculate accuracy and Information Transfer Rate (ITR).
 
@@ -76,7 +76,8 @@ def calculate_accuracy_and_ITR(true_labels, predicted_labels, epoch_start_time=0
     else:
         ITR_trial = np.log2(N) + accuracy * np.log2(accuracy) + (1 - accuracy) * np.log2((1 - accuracy) / (N - 1))
 
-    ITR_time = ITR_trial * (num_trials / (epoch_end_time - epoch_start_time))
+    ITR_time = ITR_trial * (trials / duration)
+
 
     return accuracy, ITR_time
 
@@ -115,7 +116,7 @@ def plot_accuracy_and_ITR(accuracy_array, ITR_array, channel, subject):
     plt.tight_layout()
     plt.savefig(f"{channel}_{subject}_heatmap.png")
 
-def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency):
+def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,true_label):
     """
     Plot histogram of predictor variable calculated from EEG epochs FFT.
 
@@ -123,6 +124,7 @@ def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency):
     - eeg_epochs_fft (numpy.ndarray): FFT of EEG epochs, shape (num_epochs, num_channels, num_frequencies).
     - fft_frequencies (numpy.ndarray): Frequencies corresponding to FFT, shape (num_frequencies,).
     - event_frequency (tuple): Tuple containing two event frequencies of interest.
+    - true_label (bool): True if the event is present in the epoch, False otherwise.
 
     Returns:
     - None
@@ -134,17 +136,17 @@ def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency):
     frequency_index_2 = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
 
     # Extract amplitudes for the two event frequencies
-    amplitudes_1 = np.abs(eeg_epochs_fft[:, frequency_index_1])
-    amplitudes_2 = np.abs(eeg_epochs_fft[:, frequency_index_2])
+    present_amplitudes = eeg_epochs_fft[true_label, frequency_index_1] - eeg_epochs_fft[true_label, frequency_index_2]
+    absent_amplitudes = eeg_epochs_fft[~true_label, frequency_index_1] - eeg_epochs_fft[~true_label, frequency_index_2]
 
-    predictor_variable = np.array(amplitudes_1 - amplitudes_2)
+    # Plot KDE graph
+    sns.kdeplot(present_amplitudes, color='skyblue', label='Present', fill=True)
+    sns.kdeplot(absent_amplitudes, color='orange', label='Absent', fill=True)
 
-    # Plot predictor histogram
-    plt.hist(predictor_variable, bins=10, color='skyblue', edgecolor='black')
-    plt.title('Predictor Histogram')
+    plt.title('Kernel Density Estimate (KDE) of Predictor Variable')
     plt.xlabel('Predictor Variable')
-    plt.ylabel('Frequency')
+    plt.ylabel('Density')
+    plt.legend()
     plt.grid(True)
-
 
     plt.show()
