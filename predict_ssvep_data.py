@@ -31,15 +31,15 @@ def generate_predictions(eeg_epochs_fft, fft_frequencies, event_frequency, thres
     frequency_index_2 = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
 
     # Extract amplitudes for the two event frequencies
-    amplitudes_1 = np.abs(eeg_epochs_fft[:, :, frequency_index_1])
-    amplitudes_2 = np.abs(eeg_epochs_fft[:, :, frequency_index_2])
+    amplitudes_1 = np.abs(eeg_epochs_fft[:, frequency_index_1])
+    amplitudes_2 = np.abs(eeg_epochs_fft[:, frequency_index_2])
 
     # Initialize array to store predicted labels
     predicted_labels = np.empty(eeg_epochs_fft.shape[0], dtype=int)
 
     # Iterate over EEG epochs to predict labels based on amplitude difference
     for trial_index in range(0, eeg_epochs_fft.shape[0]):
-        amplitude_difference = (amplitudes_1[trial_index][0] - amplitudes_2[trial_index][0])
+        amplitude_difference = (amplitudes_1[trial_index] - amplitudes_2[trial_index])
 
         # Predict label based on amplitude difference and threshold
         if amplitude_difference > threshold:
@@ -80,7 +80,7 @@ def calculate_accuracy_and_ITR(true_labels, predicted_labels, epoch_start_time=0
 
     return accuracy, ITR_time
 
-def plot_accuracy_and_ITR(accuracy_array, ITR_array):
+def plot_accuracy_and_ITR(accuracy_array, ITR_array, channel, subject):
     """
     Plot accuracy and Information Transfer Rate (ITR) heatmaps.
 
@@ -111,11 +111,22 @@ def plot_accuracy_and_ITR(accuracy_array, ITR_array):
     axs[1].set_xlabel('Epoch End Time (s)')
     axs[1].set_ylabel('Epoch Start Time (s)')
     axs[1].invert_yaxis()
-    
+    fig.suptitle(f"{channel}_{subject}_heatmap", fontsize="x-large")
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f"{channel}_{subject}_heatmap.png")
 
 def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency):
+    """
+    Plot histogram of predictor variable calculated from EEG epochs FFT.
+
+    Parameters:
+    - eeg_epochs_fft (numpy.ndarray): FFT of EEG epochs, shape (num_epochs, num_channels, num_frequencies).
+    - fft_frequencies (numpy.ndarray): Frequencies corresponding to FFT, shape (num_frequencies,).
+    - event_frequency (tuple): Tuple containing two event frequencies of interest.
+
+    Returns:
+    - None
+    """
 
     # Find indices corresponding to event frequencies in the FFT frequencies array
     # Find the one that is closest
@@ -123,21 +134,17 @@ def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency):
     frequency_index_2 = np.argmin(np.abs(fft_frequencies - event_frequency[1]))
 
     # Extract amplitudes for the two event frequencies
-    amplitudes_1 = np.abs(eeg_epochs_fft[:, :, frequency_index_1])
-    amplitudes_2 = np.abs(eeg_epochs_fft[:, :, frequency_index_2])
+    amplitudes_1 = np.abs(eeg_epochs_fft[:, frequency_index_1])
+    amplitudes_2 = np.abs(eeg_epochs_fft[:, frequency_index_2])
 
-    predictor_variable = np.array(amplitudes_1 - amplitudes_2) / 10
-
-    # Calculate the interquartile range (IQR)
-    iqr = np.percentile(predictor_variable, 75) - np.percentile(predictor_variable, 25)
-
-    # Calculate the number of bins using the Freedman-Diaconis rule
-    num_bins = int(np.ceil(2 * iqr / (len(predictor_variable) ** (1/3))))
+    predictor_variable = np.array(amplitudes_1 - amplitudes_2)
 
     # Plot predictor histogram
-    plt.hist(predictor_variable, bins=num_bins, color='skyblue', edgecolor='black')
+    plt.hist(predictor_variable, bins=10, color='skyblue', edgecolor='black')
     plt.title('Predictor Histogram')
     plt.xlabel('Predictor Variable')
     plt.ylabel('Frequency')
     plt.grid(True)
+
+
     plt.show()
