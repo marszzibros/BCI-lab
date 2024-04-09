@@ -27,7 +27,7 @@ def generate_predictions(eeg_epochs_fft, fft_frequencies, event_frequency, thres
     Returns:
     - predicted_labels (bool,numpy.ndarray): Array of predicted labels corresponding to each EEG epoch.
                                         The labels are selected from event_frequency based on amplitude difference and threshold.
-                                        The array has shape (n_epochs,) and dtype 'object'.
+                                        The array has shape (n_epochs,) and dtype 'bool'.
     """
 
     # Find indices corresponding to event frequencies in the FFT frequencies array
@@ -60,8 +60,8 @@ def calculate_accuracy_and_ITR(true_labels, predicted_labels, trials, duration):
     Calculate accuracy and Information Transfer Rate (ITR).
 
     Parameters:
-    - true_labels (numpy.ndarray): Array of true labels.
-    - predicted_labels (numpy.ndarray): Array of predicted labels.
+    - true_labels (numpy.ndarray): Array of true labels. (num_epochs, )
+    - predicted_labels (numpy.ndarray): Array of predicted labels. (num_epochs, )
     - trials (int): Total number of trials.
     - duration (float): Total duration in seconds.
 
@@ -88,31 +88,34 @@ def calculate_accuracy_and_ITR(true_labels, predicted_labels, trials, duration):
 
     return accuracy, ITR_time
 
-def plot_accuracy_and_ITR(data, channel, subject, start_time_array=np.arange(21), end_time_array=np.arange(21)):
+def plot_accuracy_and_ITR(data, channel, subject, start_time_array=np.linspace(start=0, stop=20, num=21), end_time_array=np.linspace(start=0, stop=20, num=21)):
     """
     Plot accuracy and Information Transfer Rate (ITR) heatmaps.
 
     Parameters:
-    - accuracy_array (numpy.ndarray): Array containing accuracy values.
-    - ITR_array (numpy.ndarray): Array containing ITR values.
+    - data (dictionary): raw data dictionary
     - channel (int): Channel number.
     - subject (int): Subject number.
-    - x_axis (numpy.ndarray, optional): Custom x-axis values. Defaults to np.arange(21).
-    - y_axis (numpy.ndarray, optional): Custom y-axis values. Defaults to np.arange(21).
+    - start_time_array (numpy.ndarray, optional): start time arrays Defaults to np.linspace(start=0, stop=20, num=21)
+    - end_time_array (numpy.ndarray, optional): end time arrays Defaults to np.linspace(start=0, stop=20, num=21)
 
     Returns:
     - None
     """
+    # find channel index
     channel_index = np.where(data['channels'] == channel)[0]
 
+    # initialize arrays
     accuracy_array = np.ones((21,21), dtype=float) * -1
     ITR_array = np.ones((21,21), dtype=float) * -1
 
+    # set values to find minimum value
     min_accuracy = 1
     min_ITR = 100
 
     fs = data['fs']
 
+    # find event frequency in our case 12 and 15
     event_frequency = np.array([event[:-2] for event in set(data['event_types'])], dtype=int)
     event_frequency= np.sort(event_frequency)[::-1] 
 
@@ -123,13 +126,17 @@ def plot_accuracy_and_ITR(data, channel, subject, start_time_array=np.arange(21)
                 # get epochs and fft
                 eeg_epochs, epoch_times, is_trial_15Hz = import_ssvep_data.epoch_ssvep_data(data, epoch_start_time=start_time, epoch_end_time=end_time)
 
+                # calculate fft filters
                 eeg_epochs_fft, fft_frequencies = import_ssvep_data.get_frequency_spectrum(eeg_epochs, fs)
                 channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:].squeeze()
 
+                # get predictions
                 predictions = predict_ssvep_data.generate_predictions(channel_eeg_epochs_fft, fft_frequencies, event_frequency)
 
+                # get accuracy and ITR
                 accuracy, ITR_time = predict_ssvep_data.calculate_accuracy_and_ITR(is_trial_15Hz, predictions, eeg_epochs_fft.shape[1], duration=(end_time-start_time) * fs * (1/10))
 
+                # find min value to pad
                 if min_accuracy > accuracy:
                     min_accuracy = accuracy
                 if min_ITR > ITR_time:
@@ -138,6 +145,7 @@ def plot_accuracy_and_ITR(data, channel, subject, start_time_array=np.arange(21)
                 accuracy_array[start_index, end_index] = accuracy
                 ITR_array[start_index, end_index] = ITR_time
 
+    # pad to the min value 
     for start_time in range(0, 21):
         for end_time in range(0, 21):
             if accuracy_array[start_time, end_time] == -1:
@@ -145,6 +153,7 @@ def plot_accuracy_and_ITR(data, channel, subject, start_time_array=np.arange(21)
             if ITR_array[start_time, end_time] == -1:
                 ITR_array[start_time, end_time] = min_ITR
 
+    # change floatign to percent scale
     accuracy_array = accuracy_array * 100
 
     # Set up the figure and axes using Seaborn
@@ -196,14 +205,13 @@ def plot_predictor_histogram(eeg_epochs_fft, fft_frequencies, event_frequency,tr
     absent_amplitudes = eeg_epochs_fft[~true_label, frequency_index_1] - eeg_epochs_fft[~true_label, frequency_index_2]
 
     # Plot KDE graph
-    sns.kdeplot(present_amplitudes, color='skyblue', label='Present', fill=True)
-    sns.kdeplot(absent_amplitudes, color='orange', label='Absent', fill=True)
+    sns.kdeplot(np.real(present_amplitudes), color='skyblue', label='Present', fill=True)
+    sns.kdeplot(np.real(absent_amplitudes), color='orange', label='Absent', fill=True)
 
     plt.title(f'KDE of Predictor Variable for SSVEP subject {subject} {channel} epoch time: [{condition[0]}, {condition[1]}]')
     plt.xlabel('Predictor Variable')
     plt.ylabel('Density')
 
-    plt.vlines(200, 0, 0.0008, colors='r', linestyles='dashed')
     plt.legend()
     plt.grid(True)
 

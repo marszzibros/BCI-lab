@@ -1,5 +1,14 @@
 
+"""
+This code tests the analysis of SSVEP data, focusing on predicting brain responses to visual stimuli. 
+It imports data, generates predictions, and calculates accuracy and Information Transfer Rate (ITR). 
+Visualizations are created to examine accuracy and ITR across different time intervals, particularly 
+emphasizing the O2 electrode's role in visual processing. Lastly, it identifies instances of high ITR 
+but low accuracy within a specific time range, providing insights into the trade-offs between speed 
+and precision in SSVEP analysis.
 
+Jay Hwasung Jung, Tynan Gacy
+"""
 
 #%%
 
@@ -11,7 +20,7 @@ import numpy as np
 
 # initialize import parameters
 directory_path = "SsvepData/"
-subject = 1
+subject = 2
 
 # load ssvep data and prepare for the epochs
 data = import_ssvep_data.load_ssvep_data(subject, directory_path)
@@ -47,18 +56,20 @@ accuracy, ITR_time = predict_ssvep_data.calculate_accuracy_and_ITR(is_trial_15Hz
 # Part 3 & 4 
 
 # initialize predict parameters
-# we will use Oz electrode
+# we will use O2 electrode
 # initialize predict parameters
 channel = 'O2'
 
 start_time_array = np.linspace(start=0, stop=20, num=21)
-end_time_array = np.linspace(start=0, stop=20, num=21)
+end_time_array = np.linspace(start=0,  stop=20, num=21)
 
 predict_ssvep_data.plot_accuracy_and_ITR(data, channel=channel, subject=subject, end_time_array=end_time_array, start_time_array=start_time_array)
 
 # %%
 # Part 5
-condition = [11,12]
+
+# find the high ITR while low accuracy
+condition = [12,12.25]
 
 # initialize predict parameters
 channel = 'O2'
@@ -71,5 +82,3 @@ eeg_epochs_fft, fft_frequencies = import_ssvep_data.get_frequency_spectrum(eeg_e
 channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:].squeeze()
 
 predict_ssvep_data.plot_predictor_histogram(eeg_epochs_fft=channel_eeg_epochs_fft, fft_frequencies=fft_frequencies, event_frequency=event_frequency,true_label=is_trial_15Hz, channel=channel, subject=subject, condition=condition)
-
-# %%
