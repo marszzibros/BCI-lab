@@ -20,7 +20,7 @@ import numpy as np
 
 # initialize import parameters
 directory_path = "SsvepData/"
-subject = 2
+subject = 1
 
 # load ssvep data and prepare for the epochs
 data = import_ssvep_data.load_ssvep_data(subject, directory_path)
@@ -72,7 +72,7 @@ predict_ssvep_data.plot_accuracy_and_ITR(data, channel=channel, subject=subject,
 condition = [12,12.25]
 
 # initialize predict parameters
-channel = 'O2'
+channel = 'Oz'
 channel_index = np.where(data['channels'] == channel)[0]
 channel_eeg_epochs_fft = eeg_epochs_fft[:,channel_index,:].squeeze()
 

@@ -1,4 +1,11 @@
 """
+This module provides functions for analyzing SSVEP (Steady-State Visually Evoked Potential) EEG (Electroencephalography) data.
+
+Functions:
+- generate_predictions: Generates predictions for SSVEP events based on EEG epochs' Fast Fourier Transform (FFT) data.
+- calculate_accuracy_and_ITR: Calculates accuracy and Information Transfer Rate (ITR) for SSVEP predictions.
+- plot_accuracy_and_ITR: Plots heatmaps of accuracy and ITR for SSVEP data based on different epoch start and end times.
+- plot_predictor_histogram: Plots a histogram of predictor variable calculated from EEG epochs FFT, indicating the presence or absence of SSVEP events.
 
 @author: 
     Jay Hwasung Jung
