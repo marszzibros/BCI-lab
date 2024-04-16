@@ -15,6 +15,7 @@ lab 5: Spatial Components
 # Import Statements
 import numpy as np
 import matplotlib.pyplot as plt
+from plot_topo import plot_topo
 
 # Part 1: Load Data
 
@@ -36,7 +37,6 @@ def load_data(data_directory, channels_to_plot = None):
             
             axes[channel_to_plot_index].plot(np.arange(data['eeg'].shape[1]) / data['fs'], data['eeg'][channel_index[channel_to_plot_index]])
             axes[channel_to_plot_index].set_ylabel(f'Voltage on {channel_name} (uV)')
-            axes[channel_to_plot_index].title(channel_name)
             axes[channel_to_plot_index].grid()
 
         plt.xlabel('Time (s)')
@@ -45,7 +45,40 @@ def load_data(data_directory, channels_to_plot = None):
 
     return data
 
+def plot_components (mixing_matrix, channels, components_to_plot = np.arange(10)):
+    
+    fig, axs = plt.subplots(int(np.ceil(len(components_to_plot) / 5)), 5, figsize=(20, 5 * int(np.ceil(len(components_to_plot) / 5)))) 
+
+    for topo_index, channel_index in enumerate(components_to_plot):
+
+        plt.subplot(int(np.ceil(len(components_to_plot) / 5)), 5, topo_index + 1)
+
+        im, cbar = plot_topo(channel_names=list(channels), 
+                             channel_data=mixing_matrix.T[channel_index], 
+                             title=f"ICA Component {topo_index}",
+                             cbar_label="",montage_name="standard_1005")
+
+
+        axs[int(np.floor(topo_index / 5))][int(topo_index % 5)].imshow(cbar.ax.figure.canvas.renderer.buffer_rgba())
+        fig.colorbar(im, ax=axs[int(np.floor(topo_index / 5))][int(topo_index % 5)], fraction=0.05)
+        axs[int(np.floor(topo_index / 5))][int(topo_index % 5)].set_title(f"ICA component {topo_index}")
+
+        # Remove ticks and tick labels from both axes
+        axs[int(np.floor(topo_index / 5))][int(topo_index % 5)].set_xticks([])
+        axs[int(np.floor(topo_index / 5))][int(topo_index % 5)].set_yticks([])
+
+        # Remove the axis lines
+        axs[int(np.floor(topo_index / 5))][int(topo_index % 5)].tick_params(top=False,
+                                                                            bottom=False,
+                                                                            left=False,
+                                                                            right=False,
+                                                                            labelleft=False,
+                                                                            labelbottom=False)
 
 
 
+    plt.tight_layout()
+    fig.savefig("ICA_component_topo.png")
 
+
+        

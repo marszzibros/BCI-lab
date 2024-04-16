@@ -12,14 +12,15 @@ BME 6710 - Dr. Jangraw
 lab 5: Spatial Components
 """
 
+#%%
 # Import statement
-from remove_audvis_blinks import load_data
+from remove_audvis_blinks import load_data, plot_components
+
 
 # Part 1: Load Data
 data_directory = 'AudVisData/AudVisData.npy'
 channels_to_plot = ['Fpz', 'Cz', 'Iz']
-load_data(data_directory, channels_to_plot)
-
+data = load_data(data_directory, channels_to_plot)
 
 
 # It appears that a blink may have occurred around 15 seconds into the recording. Whenever a blink occurs,
@@ -28,3 +29,14 @@ load_data(data_directory, channels_to_plot)
 # voltage deflections in the Cz and Iz electrodes, located in a central and occipital area respectively according to
 # the standard 10/10 system.
 
+
+# %%
+
+mixing_matrix = data['mixing_matrix']
+channels = data['channels']
+mixing_matrix.shape
+
+plot_components(mixing_matrix=mixing_matrix, channels=channels)
+
+
+# %%
