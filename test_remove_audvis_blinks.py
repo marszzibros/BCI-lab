@@ -1,7 +1,7 @@
 """
 This script uses functions from remove_audvis_blinks.py to load a dataset, create a plot of ICA component spatial
 topographies, plot two EOG components identified by ICA, removes the two EOG artifact components,transforms the
-source data back into electrode space without removing any sources, and plots raw/cleaned/reconstructed EEG data.  
+source data back into electrode space without removing any sources, and plots raw/cleaned/reconstructed EEG data.
 
 @author: marszzibros
 @author: APC-03
@@ -31,6 +31,8 @@ channels = data['channels']
 mixing_matrix.shape
 
 plot_components(mixing_matrix=mixing_matrix, channels=channels)
+# It seems that the ICA component 1 is the only component that seems to be an EOG artifact as it has a high positive
+# voltage deflection in the frontal lobe. None of the others seem to fit the profile expect perhaps 2, 3, or 9.
 
 # Part 3: Transform into Source Space
 eeg = data['eeg']
@@ -52,3 +54,6 @@ reconstructed_eeg = remove_sources(source_activations=source_activations.copy(),
 channels_to_plot = ["Fpz", "Cz", "Iz"]
 compare_reconstructions(eeg=eeg.copy(), reconstructed_eeg=reconstructed_eeg.copy(), cleaned_eeg=cleaned_eeg.copy(),
                         fs=fs, channels=channels, channels_to_plot=channels_to_plot)
+# The cleaned data seems to follow the raw and reconstructed data very closely for Iz and Cz while the cleaned data
+# is very different for Fpz. This seems to indicate that the ICA artifact removal method did work as the blink
+# artifacts were most prominent in this channel. 
