@@ -13,12 +13,15 @@ lab 5: Spatial Components
 """
 
 # Import statement
-import remove_audvis_blinks as rmv
+from remove_audvis_blinks import load_data
 
 # Part 1: Load Data
-data_directory = '/Users/aiden/PycharmProjects/BCI_202401/AudVisData.npy'
+data_directory = 'AudVisData/AudVisData.npy'
 channels_to_plot = ['Fpz', 'Cz', 'Iz']
-rmv.load_data(data_directory, channels_to_plot)
+load_data(data_directory, channels_to_plot)
+
+
+
 # It appears that a blink may have occurred around 15 seconds into the recording. Whenever a blink occurs,
 # there is a large positive deflection in voltage primarily on frontal electrodes. At this time point there is a
 # large positive voltage deflection at the Fpz electrode, located on the frontal lobe. There are smaller positive

@@ -19,47 +19,29 @@ import matplotlib.pyplot as plt
 # Part 1: Load Data
 
 
-def load_data(data_directory, channels_to_plot):
-    dataset = np.load(data_directory, allow_pickle=True).item()
-    # Extract fields from data set
-    eeg_data = dataset['eeg']
-    channels = dataset['channels']
-    fs = dataset['fs']
-    event_samples = dataset['event_samples']
-    event_types = dataset['event_types']
-    unmixing_matrix = dataset['unmixing_matrix']
-    mixing_matrix = dataset['mixing_matrix']
+def load_data(data_directory, channels_to_plot = None):
 
-    # Create data dict
-    data = {
-        'eeg': eeg_data,
-        'channels': channels,
-        'fs': fs,
-        'event_samples': event_samples,
-        'event_types': event_types,
-        'unmixing_matrix': unmixing_matrix,
-        'mixing_matrix': mixing_matrix
-    }
+    # already dictionary
+    data = np.load(data_directory, allow_pickle=True).item()
 
     # If channels_to_plot is empty, return the dataset
-    if not channels_to_plot:
-        return data
+    if channels_to_plot is not None:
 
-    # Plot raw data
-    num_channels = len(channels_to_plot)
-    num_samples = eeg_data.shape[1]
+        channel_index = np.where(np.isin(data['channels'], channels_to_plot))[0]
 
-    fig, axes = plt.subplots(num_channels, 1, sharex='all', figsize=(10, 5))
-    fig.suptitle('Raw AudVis EEG Data ')
-    for i, channel_name in enumerate(channels_to_plot):
-        channel_index = np.where(channels == channel_name)[0][0]
-        axes[i].plot(np.arange(num_samples) / fs, eeg_data[channel_index])
-        axes[i].set_ylabel(f'Voltage on {channel_name} (uV)')
-        axes[i].grid()
+        fig, axes = plt.subplots(len(channels_to_plot), 1, sharex='all', figsize=(10, 5))
+        fig.suptitle('Raw AudVis EEG Data')
 
-    plt.xlabel('Time (s)')
-    plt.tight_layout()
-    plt.show()
+        for channel_to_plot_index, channel_name in enumerate(channels_to_plot):
+            
+            axes[channel_to_plot_index].plot(np.arange(data['eeg'].shape[1]) / data['fs'], data['eeg'][channel_index[channel_to_plot_index]])
+            axes[channel_to_plot_index].set_ylabel(f'Voltage on {channel_name} (uV)')
+            axes[channel_to_plot_index].title(channel_name)
+            axes[channel_to_plot_index].grid()
+
+        plt.xlabel('Time (s)')
+        plt.tight_layout()
+        plt.savefig("Raw_AudVis_EEG_Data")
 
     return data
 
