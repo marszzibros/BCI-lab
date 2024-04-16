@@ -14,7 +14,7 @@ lab 5: Spatial Components
 
 #%%
 # Import statement
-from remove_audvis_blinks import load_data, plot_components
+from remove_audvis_blinks import load_data, plot_components,get_sources, remove_sources, compare_reconstructions
 
 
 # Part 1: Load Data
@@ -31,7 +31,7 @@ data = load_data(data_directory, channels_to_plot)
 
 
 # %%
-
+# Part 2: Plot the Components
 mixing_matrix = data['mixing_matrix']
 channels = data['channels']
 mixing_matrix.shape
@@ -40,3 +40,24 @@ plot_components(mixing_matrix=mixing_matrix, channels=channels)
 
 
 # %%
+# Part 3: Transform into Source Space
+eeg = data['eeg']
+unmixing_matrix = data['unmixing_matrix']
+fs = data['fs']
+
+
+
+sources_to_plot = [0,3,9]
+
+source_activations = get_sources(eeg=eeg, unmixing_matrix=unmixing_matrix, fs=fs, sources_to_plot=sources_to_plot)
+
+# %%
+# Part 4: Remove Artifact Components
+sources_to_remove = [0,3,9]
+cleaned_eeg = remove_sources(source_activations=source_activations.copy(), mixing_matrix=mixing_matrix, sources_to_remove=sources_to_remove)
+reconstructed_eeg = remove_sources(source_activations=source_activations.copy(), mixing_matrix=mixing_matrix, sources_to_remove=[])
+
+# %%
+# Part 5: Transform Back into Electrode Space
+channels_to_plot = ["Fpz","Cz","Iz"]
+compare_reconstructions(eeg=eeg.copy(), reconstructed_eeg=reconstructed_eeg.copy(), cleaned_eeg=cleaned_eeg.copy(), fs=fs, channels=channels, channels_to_plot=channels_to_plot)

@@ -20,17 +20,16 @@ from plot_topo import plot_topo
 # Part 1: Load Data
 
 
-def load_data(data_directory, channels_to_plot = None):
+def load_data(data_directory, channels_to_plot = []):
 
     # already dictionary
     data = np.load(data_directory, allow_pickle=True).item()
 
-    # If channels_to_plot is empty, return the dataset
-    if channels_to_plot is not None:
+    if len(channels_to_plot) != 0:
 
         channel_index = np.where(np.isin(data['channels'], channels_to_plot))[0]
 
-        fig, axes = plt.subplots(len(channels_to_plot), 1, sharex='all', figsize=(10, 5))
+        fig, axes = plt.subplots(len(channels_to_plot), 1, sharex='all', figsize=(10, 3 * len(channels_to_plot)))
         fig.suptitle('Raw AudVis EEG Data')
 
         for channel_to_plot_index, channel_name in enumerate(channels_to_plot):
@@ -38,10 +37,10 @@ def load_data(data_directory, channels_to_plot = None):
             axes[channel_to_plot_index].plot(np.arange(data['eeg'].shape[1]) / data['fs'], data['eeg'][channel_index[channel_to_plot_index]])
             axes[channel_to_plot_index].set_ylabel(f'Voltage on {channel_name} (uV)')
             axes[channel_to_plot_index].grid()
-
+            axes[channel_to_plot_index].set_xlim([55,60])
         plt.xlabel('Time (s)')
         plt.tight_layout()
-        plt.savefig("Raw_AudVis_EEG_Data")
+        plt.savefig("Raw_AudVis_EEG_Data.png")
 
     return data
 
@@ -80,5 +79,50 @@ def plot_components (mixing_matrix, channels, components_to_plot = np.arange(10)
     plt.tight_layout()
     fig.savefig("ICA_component_topo.png")
 
+def get_sources(eeg, unmixing_matrix, fs, sources_to_plot = []):
+    source_activations = np.matmul(unmixing_matrix, eeg)
+    if len(sources_to_plot) != 0:
 
+        fig, axes = plt.subplots(len(sources_to_plot), 1, sharex='all', figsize=(10, 3 * len(sources_to_plot)))
+        fig.suptitle('AudVis EEG Data in ICA source space')
+
+        for source_to_plot_index, source in enumerate(sources_to_plot):
+            
+            axes[source_to_plot_index].plot(np.arange(eeg.shape[1]) / fs, source_activations[sources_to_plot[source_to_plot_index]], label="reconstructed")
+            axes[source_to_plot_index].set_ylabel(f'Source {source} (uV)')
+            axes[source_to_plot_index].grid()
+            axes[source_to_plot_index].set_xlim([55,60])
+            axes[source_to_plot_index].legend()
+
+        plt.xlabel('Time (s)')
+        plt.tight_layout()
+        plt.savefig("AudVis_EEG_Data_in_ICA_source_space.png")
+
+    return source_activations
         
+def remove_sources (source_activations, mixing_matrix, sources_to_remove):
+    source_activations[sources_to_remove,:] = 0
+    cleaned_eeg = np.matmul(mixing_matrix, source_activations)
+    return cleaned_eeg
+
+def compare_reconstructions(eeg, reconstructed_eeg, cleaned_eeg, fs, channels, channels_to_plot):
+    if len(channels_to_plot) != 0:
+
+        channel_index = np.where(np.isin(channels, channels_to_plot))[0]
+
+        fig, axes = plt.subplots(len(channels_to_plot), 1, sharex='all', figsize=(10, 3 * len(channels_to_plot)))
+        fig.suptitle('AudVis EEG Data reconstructed & cleaned after ICA')
+
+        for channel_to_plot_index, channel_name in enumerate(channels_to_plot):
+            
+            axes[channel_to_plot_index].plot(np.arange(eeg.shape[1]) / fs, eeg[channel_index[channel_to_plot_index]], label="raw")
+            axes[channel_to_plot_index].plot(np.arange(reconstructed_eeg.shape[1]) / fs, reconstructed_eeg[channel_index[channel_to_plot_index]],label="reconstructed", linestyle='dashed')
+            axes[channel_to_plot_index].plot(np.arange(cleaned_eeg.shape[1]) / fs, cleaned_eeg[channel_index[channel_to_plot_index]],label ="cleaned" , linestyle='dotted')
+
+            axes[channel_to_plot_index].set_ylabel(f'Voltage on {channel_name} (uV)')
+            axes[channel_to_plot_index].grid()
+            axes[channel_to_plot_index].legend()
+            axes[channel_to_plot_index].set_xlim([55,60])
+        plt.xlabel('Time (s)')
+        plt.tight_layout()
+        plt.savefig("AudVis_EEG_Data_reconstructed_cleaned_after_ICA.png")
