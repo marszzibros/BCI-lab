@@ -1,8 +1,6 @@
 """
-This script uses functions from filter_ssvep_data.py to processes and analyz EEG data. The script imports
-necessary functions and loads data for a specific subject, crates bandpass filters centered around 12Hz and 15Hz,
-filters the EEG signals using the bandpass filters, extracts envelopes for both the 12Hz and 15Hz frequency bands,
-plots the amplitudes of the SSVEP responses, and plots the spectra of the filtered signals.
+This script provides functions for loading EEG data, plotting raw data, plotting ICA components, and performing
+source reconstruction and data cleaning.
 
 @author: marszzibros
 @author: APC-03
@@ -31,7 +29,7 @@ def load_data(data_directory, channels_to_plot):
 
     Returns
     -------
-
+    data: dict, contains the data loaded from the data directory
     """
     dataset = np.load(data_directory, allow_pickle=True).item()
     # Extract fields from data set
@@ -72,6 +70,7 @@ def load_data(data_directory, channels_to_plot):
 
     plt.xlabel('Time (s)')
     plt.tight_layout()
+    plt.savefig('Raw_AudVis_EEG_Data.png')
 
     return data
 
@@ -129,7 +128,7 @@ def get_sources(eeg, unmixing_matrix, fs, sources_to_plot=[]):
 
     Returns
     -------
-
+    source_activations: array of size W x X, source activation timecourses.
     """
     source_activations = np.matmul(unmixing_matrix, eeg)
     if len(sources_to_plot) != 0:
@@ -148,7 +147,6 @@ def get_sources(eeg, unmixing_matrix, fs, sources_to_plot=[]):
 
         plt.xlabel('Time (s)')
         plt.tight_layout()
-        plt.show()
         plt.savefig("AudVis_EEG_Data_in_ICA_source_space.png")
 
     return source_activations
@@ -159,13 +157,13 @@ def remove_sources(source_activations, mixing_matrix, sources_to_remove):
 
     Parameters
     ----------
-    source_activations:
-    mixing_matrix:
-    sources_to_remove:
+    source_activations: array of size W x X, source activation timecourses.
+    mixing_matrix: array of size
+    sources_to_remove: list of ints, the indices of the sources to remove from the data.
 
     Returns
     -------
-
+    cleaned_eeg: array of size x1 x x2, the matrix product of the mixing matrix and source activations
     """
     source_activations[sources_to_remove, :] = 0
     cleaned_eeg = np.matmul(mixing_matrix, source_activations)
@@ -177,12 +175,12 @@ def compare_reconstructions(eeg, reconstructed_eeg, cleaned_eeg, fs, channels, c
 
     Parameters
     ----------
-    eeg
-    reconstructed_eeg
-    cleaned_eeg
-    fs
-    channels
-    channels_to_plot
+    eeg: array of size channels x samples, eeg data in volts.
+    reconstructed_eeg:
+    cleaned_eeg:
+    fs: float, the sampling frequency in Hz.
+    channels: array of size 1 x number of channels, the name of each channel in the same order as th eeg matrix.
+    channels_to_plot: list of strings, the names of channels to plot.
     """
     if len(channels_to_plot) != 0:
 
@@ -207,5 +205,4 @@ def compare_reconstructions(eeg, reconstructed_eeg, cleaned_eeg, fs, channels, c
             axes[channel_to_plot_index].set_xlim([55, 60])
         plt.xlabel('Time (s)')
         plt.tight_layout()
-        plt.show()
         plt.savefig("AudVis_EEG_Data_reconstructed_cleaned_after_ICA.png")
