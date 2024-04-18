@@ -51,7 +51,8 @@ def load_data(data_directory, channels_to_plot = []):
             axes[channel_to_plot_index].plot(np.arange(data['eeg'].shape[1]) / data['fs'], data['eeg'][channel_index[channel_to_plot_index]])
             axes[channel_to_plot_index].set_ylabel(f'Voltage on {channel_name} (uV)')
             axes[channel_to_plot_index].grid()
-            axes[channel_to_plot_index].set_xlim([55,60])
+            # zoom in
+            #axes[channel_to_plot_index].set_xlim([0,30])
         plt.xlabel('Time (s)')
         plt.tight_layout()
         plt.savefig("Raw_AudVis_EEG_Data.png")
