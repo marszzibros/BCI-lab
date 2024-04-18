@@ -36,7 +36,7 @@ mixing_matrix.shape
 # ***IMPORTANT***
 # The correct plot will be saved as a figure as "ICA_component_topo.png"
 
-plot_components(mixing_matrix=mixing_matrix, channels=channels,components_to_plot=[1,2,3,4,5,6])
+plot_components(mixing_matrix=mixing_matrix, channels=channels)
 
 # It seems that the ICA component 1 is the only component that seems to be an EOG artifact as it has a high positive
 # voltage deflection in the frontal lobe. None of the others seem to fit the profile expect perhaps 2, 3, or 9.
@@ -45,10 +45,10 @@ plot_components(mixing_matrix=mixing_matrix, channels=channels,components_to_plo
 # Part 3: Transform into Source Space
 eeg = data['eeg']
 unmixing_matrix = data['unmixing_matrix']
-print(unmixing_matrix.shape)
+
 fs = data['fs']
 
-sources_to_plot = [0, 3, 9]
+sources_to_plot = [0, 1, 3]
 
 source_activations = get_sources(eeg=eeg, unmixing_matrix=unmixing_matrix, fs=fs, sources_to_plot=sources_to_plot)
 
